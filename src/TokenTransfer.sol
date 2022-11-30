@@ -86,20 +86,7 @@ contract TokenTransfer is PlugBase {
         outbound(remoteChainSlug_, msgGasLimit_, msg.value, payload);
     }
 
-    function rescueFunds(
-        address _token,
-        address _userAddress,
-        uint256 _amount
-    ) external onlyOwner {
-        IERC20(_token).safeTransfer(_userAddress, _amount);
-    }
 
-    function rescueEther(address payable _userAddress, uint256 _amount)
-        external
-        onlyOwner
-    {
-        _userAddress.transfer(_amount);
-    }
 
     function _receiveInbound(bytes memory payload_)
         internal
@@ -125,12 +112,24 @@ contract TokenTransfer is PlugBase {
             "TokenTransfer: Invalid depositId"
         );
         require(transfer.isDone == false, "TokenTransfer: Already claimed");
-        _transfer(transfer.recipient, transfer.amount);
+        IERC20(token).transfer(transfer.recipient, transfer.amount);
         transfers[depositId].isDone = true;
         emit FullFilled(transfer.recipient, transfer.amount, depositId);
     }
 
-    function _transfer(address receiver_, uint256 amount_) private {
-        IERC20(token).transfer(receiver_, amount_);
+    function rescueFunds(
+        address _token,
+        address _userAddress,
+        uint256 _amount
+    ) external onlyOwner {
+        IERC20(_token).safeTransfer(_userAddress, _amount);
     }
+
+    function rescueEther(address payable _userAddress, uint256 _amount)
+        external
+        onlyOwner
+    {
+        _userAddress.transfer(_amount);
+    }
+
 }
