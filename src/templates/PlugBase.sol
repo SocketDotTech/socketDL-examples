@@ -24,13 +24,17 @@ abstract contract PlugBase {
         socket.setPlugConfig(_remoteChainSlug, _remotePlug, _integrationType);
     }
 
-    function outbound(uint256 chainSlug, uint256 gasLimit, bytes memory payload) internal {
-        socket.outbound{value: msg.value}(chainSlug, gasLimit, payload);
+    function outbound(uint256 chainSlug, uint256 gasLimit, uint256 fees, bytes memory payload) internal {
+        socket.outbound{value: fees}(chainSlug, gasLimit, payload);
     }
 
     function inbound(bytes calldata payload_) external payable { 
         require(msg.sender==address(socket), "no auth");
         receiveInbound(payload_);
+    }
+
+    function getChainSlug() internal returns (uint256) {
+        return socket.chainSlug();
     }
 
     function receiveInbound(bytes memory payload_) internal virtual;

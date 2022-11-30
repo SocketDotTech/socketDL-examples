@@ -114,4 +114,6 @@ interface ISocket {
         address remotePlug_,
         string memory integrationType_
     ) external;
+
+    function chainSlug() external returns (uint256);
 }

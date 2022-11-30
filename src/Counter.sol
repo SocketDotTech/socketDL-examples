@@ -5,6 +5,7 @@ import {PlugBase} from "./templates/PlugBase.sol";
 
 contract Counter is PlugBase {
     uint256 public number;
+    uint256 constant public destGasLimit = 1000000;
 
     constructor(address _socket) PlugBase(_socket) {
         owner = msg.sender;
@@ -14,8 +15,8 @@ contract Counter is PlugBase {
         number = newNumber;
     }
 
-    function setNumber(uint256 newNumber, uint256 chainSlug) public payable {
-        outbound(chainSlug, 1000000, abi.encode(newNumber));
+    function setNumber(uint256 newNumber, uint256 toChainSlug) public payable {
+        outbound(toChainSlug, destGasLimit, msg.value,abi.encode(newNumber));
     }
 
     function receiveInbound(bytes memory payload_) internal virtual override{ 
