@@ -2,8 +2,9 @@
 pragma solidity ^0.8.13;
 
 import {ISocket} from "./interfaces/ISocket.sol";
+import {IPlug} from "./interfaces/IPlug.sol";
 
-contract Counter {
+contract Counter is IPlug {
     uint256 public number;
     address public owner;
     ISocket socket;
@@ -40,7 +41,8 @@ contract Counter {
         socket.outbound{value: msg.value}(chainSlug, 1000000, abi.encode(newNumber));
     }
 
-    function inbound(bytes calldata payload_) external payable onlySocket { 
+    function inbound(bytes calldata payload_) external payable override{ 
+        require(msg.sender==address(socket),"no auth");
         uint256 newNumber = abi.decode(payload_, (uint256));
         setNumber(newNumber);
     }
