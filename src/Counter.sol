@@ -19,7 +19,7 @@ contract Counter is PlugBase {
         outbound(toChainSlug, destGasLimit, msg.value,abi.encode(newNumber));
     }
 
-    function receiveInbound(bytes memory payload_) internal virtual override{ 
+    function _receiveInbound(bytes memory payload_) internal virtual override{ 
         uint256 newNumber = abi.decode(payload_, (uint256));
         setNumber(newNumber);
     }

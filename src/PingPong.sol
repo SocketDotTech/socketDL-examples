@@ -36,7 +36,7 @@ contract PingPong is PlugBase {
         );
     }
 
-    function receiveInbound(bytes memory payload_) internal virtual override{ 
+    function _receiveInbound(bytes memory payload_) internal virtual override{ 
         // decode the number of pings sent thus far
         (uint pings, uint256 remoteChainSlug) = abi.decode(payload_, (uint, uint256));
 

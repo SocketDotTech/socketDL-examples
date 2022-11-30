@@ -30,14 +30,14 @@ abstract contract PlugBase {
 
     function inbound(bytes calldata payload_) external payable { 
         require(msg.sender==address(socket), "no auth");
-        receiveInbound(payload_);
+        _receiveInbound(payload_);
     }
 
     function getChainSlug() internal returns (uint256) {
         return socket.chainSlug();
     }
 
-    function receiveInbound(bytes memory payload_) internal virtual;
+    function _receiveInbound(bytes memory payload_) internal virtual;
 
     function removeOwner() external onlyOwner() {
         owner = address(0);
