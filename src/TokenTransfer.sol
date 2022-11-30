@@ -127,6 +127,7 @@ contract TokenTransfer is PlugBase {
         require(transfer.isDone == false, "TokenTransfer: Already claimed");
         _transfer(transfer.recipient, transfer.amount);
         transfers[depositId].isDone = true;
+        emit FullFilled(transfer.recipient, transfer.amount, depositId);
     }
 
     function _transfer(address receiver_, uint256 amount_) private {
