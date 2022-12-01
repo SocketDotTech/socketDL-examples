@@ -123,6 +123,21 @@ contract TokenTransfer is PlugBase {
         transfers[depositId].isDone = true;
         emit FullFilled(transfer.recipient, transfer.amount, depositId);
     }
+.
+    function updateRelayerFeePct(uint64 relayerFeePct_)
+        external
+        onlyOwner
+    {
+        relayerFeePct = relayerFeePct_;
+    }
+
+    function updateLpFeePct(uint64 lpFeePct_)
+        external
+        onlyOwner
+    {
+        lpFeePct = lpFeePct_;
+    }
+
 
     function rescueFunds(
         address _token,
