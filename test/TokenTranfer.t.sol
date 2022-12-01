@@ -14,7 +14,7 @@ contract TokenTranferTest is Test {
         uint256 fork = vm.createFork("https://polygon-rpc.com/");
         vm.selectFork(fork);
      
-        tokenTransfer = new TokenTransfer(0x38e55351Dc02320A555b137e559D71f213694c15, 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174, 0x69B5c72837769eF1e7C164Abc6515DcFf217F920, 1e16);
+        tokenTransfer = new TokenTransfer(0x38e55351Dc02320A555b137e559D71f213694c15, 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174, 0x69B5c72837769eF1e7C164Abc6515DcFf217F920, 1e16,1e16);
         tokenTransfer.connect(42161, 0x32a80b98e33c3A0E57D635C56707208D29f970a2, "FAST");
         vm.startPrank(0x166716C2838e182d64886135a96f1AABCA9A9756);
         IERC20(0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174).transfer(address(tokenTransfer), 1000000000);
@@ -35,7 +35,7 @@ contract TokenTranferTest is Test {
 
     function testInboundFailedandClaim() public {
         vm.startPrank(0x38e55351Dc02320A555b137e559D71f213694c15);
-        bytes memory payload = abi.encode(0x32a80b98e33c3A0E57D635C56707208D29f970a2, 1000000001, "2");
+        bytes memory payload = abi.encode(0x32a80b98e33c3A0E57D635C56707208D29f970a2, 2000000001, "2");
         tokenTransfer.inbound(payload);
         vm.stopPrank();
         vm.startPrank(0x166716C2838e182d64886135a96f1AABCA9A9756);

@@ -30,6 +30,7 @@ contract TokenTransfer is PlugBase {
 
     address public token;
     uint64 public relayerFeePct;
+    uint64 public lpFeePct;
     uint256 public chainId;
     mapping(string => Transfer) public transfers;
 
@@ -47,11 +48,13 @@ contract TokenTransfer is PlugBase {
         address socket_,
         address token_,
         address spokePool_,
-        uint64 relayerFeePct_
+        uint64 relayerFeePct_,
+        uint64 lpFeePct_
     ) PlugBase(socket_) {
         token = token_;
         spokePool = SpokePool(spokePool_);
         relayerFeePct = relayerFeePct_;
+        lpFeePct = lpFeePct_;
         uint256 id;
         assembly {
             id := chainid()
@@ -86,7 +89,9 @@ contract TokenTransfer is PlugBase {
         outbound(remoteChainSlug_, msgGasLimit_, msg.value, payload);
     }
 
-
+   function _computeAmountPostFees(uint256 amount, uint64 feesPct) private pure returns (uint256) {
+        return (amount * (1e18 - feesPct)) / 1e18;
+    }
 
     function _receiveInbound(bytes memory payload_)
         internal
@@ -96,12 +101,14 @@ contract TokenTransfer is PlugBase {
         (address receiver, uint256 amount, string memory depositId) = abi
             .decode(payload_, (address, uint256, string));
 
-        try IERC20(token).transfer(receiver, amount) {
-            transfers[depositId] = Transfer(receiver, amount, true);
-            emit FullFilled(receiver, amount, depositId);
+        uint256 _amountOut = _computeAmountPostFees(amount, lpFeePct + relayerFeePct);
+
+        try IERC20(token).transfer(receiver, _amountOut) {
+            transfers[depositId] = Transfer(receiver, _amountOut, true);
+            emit FullFilled(receiver, _amountOut, depositId);
         } catch {
-            transfers[depositId] = Transfer(receiver, amount, false);
-            emit FullFilledFailed(receiver, amount, depositId);
+            transfers[depositId] = Transfer(receiver, _amountOut, false);
+            emit FullFilledFailed(receiver, _amountOut, depositId);
         }
     }
 
