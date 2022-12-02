@@ -3,22 +3,29 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import "../src/Counter.sol";
+import "../src/mocks/MockSocket.sol";
 
 contract CounterTest is Test {
-    Counter public counter;
+    Counter public srcCounter__;
+    Counter public dstCounter__;
+    MockSocket public mockSocket__;
 
-    // function setUp() public {
-    //     counter = new Counter();
-    //     counter.setNumber(0);
-    // }
+    uint256 chainSlug_ = 1;
+    uint256 remoteChainSlug_ = 2;
+    string integrationType = "FAST";
 
-    // function testIncrement() public {
-    //     counter.increment();
-    //     assertEq(counter.number(), 1);
-    // }
+    function setUp() public {
+        mockSocket__ = new MockSocket(chainSlug_, remoteChainSlug_);
+        
+        srcCounter__ = new Counter(address(mockSocket__));
+        dstCounter__ = new Counter(address(mockSocket__));
 
-    // function testSetNumber(uint256 x) public {
-    //     counter.setNumber(x);
-    //     assertEq(counter.number(), x);
-    // }
+        dstCounter__.connect(chainSlug_, address(srcCounter__), integrationType);
+        srcCounter__.connect(remoteChainSlug_, address(dstCounter__), integrationType);
+    }
+
+    function testSetNumber(uint256 x) public {
+        srcCounter__.setNumber(x, remoteChainSlug_);
+        assertEq(dstCounter__.number(), x);
+    }
 }
