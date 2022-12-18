@@ -29,7 +29,7 @@ abstract contract PlugBase {
     }
 
     function inbound(bytes calldata payload_) external payable { 
-        require(msg.sender==address(socket), "no auth");
+        require(msg.sender == address(socket), "no auth");
         _receiveInbound(payload_);
     }
 
