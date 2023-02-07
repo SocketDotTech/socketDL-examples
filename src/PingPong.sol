@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.7;
+pragma solidity 0.8.13;
 
 import {PlugBase} from "./templates/PlugBase.sol";
 pragma abicoder v2;
