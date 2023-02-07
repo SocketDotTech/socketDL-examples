@@ -1,107 +1,116 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity 0.8.13;
+pragma solidity 0.8.7;
 
-interface IPlug {
-    /**
-     * @notice executes the message received from source chain
-     * @dev this should be only executable by socket
-     * @param payload_ the data which is needed by plug at inbound call on remote
-     */
-    function inbound(
-        bytes calldata payload_
-    ) external payable;
-}
+import "../interfaces/ISocket.sol";
+import "../interfaces/IPlug.sol";
 
-contract MockSocket {
-    uint256 public immutable _chainSlug;
+contract MockSocket is ISocket {
+    uint256 public immutable override _chainSlug;
 
-    error WrongRemotePlug();
+    address public constant fastSwitchboard = address(1);
+    address public constant optimisticSwitchboard = address(2);
+
+    error WrongSiblingPlug();
     error WrongIntegrationType();
 
     struct PlugConfig {
-        address remotePlug;
-        bytes32 integrationType;
+        address siblingPlug;
+        address inboundSwitchboard;
+        address outboundSwitchboard;
     }
 
-    // integrationType => remoteChainSlug => address
-    mapping(bytes32 => mapping(uint256 => bool)) public configExists;
-    // plug => remoteChainSlug => config(verifiers, accums, deaccums, remotePlug)
+    // switchboard => siblingChainSlug => exists
+    mapping(address => mapping(uint256 => bool)) public configExists;
+    // plug => siblingChainSlug => config(inboundSwitchboard, outboundSwitchboard, siblingPlug)
     mapping(address => mapping(uint256 => PlugConfig)) public plugConfigs;
 
-    error InvalidIntegrationType();
+    error InvalidConnection();
 
-    constructor(uint256 chainSlug_, uint256 remoteChainSlug_) {
+    constructor(uint256 chainSlug_, uint256 siblingChainSlug_) {
         _chainSlug = chainSlug_;
 
-        bytes32 fastIntegration = keccak256(abi.encode("FAST"));
-        bytes32 slowIntegration = keccak256(abi.encode("SLOW"));
+        configExists[fastSwitchboard][siblingChainSlug_] = true;
+        configExists[optimisticSwitchboard][siblingChainSlug_] = true;
 
-        configExists[fastIntegration][remoteChainSlug_] = true;
-        configExists[slowIntegration][remoteChainSlug_] = true;
-
-        configExists[fastIntegration][chainSlug_] = true;
-        configExists[slowIntegration][chainSlug_] = true;
+        configExists[fastSwitchboard][chainSlug_] = true;
+        configExists[optimisticSwitchboard][chainSlug_] = true;
     }
 
-    function setPlugConfig(
-        uint256 remoteChainSlug_,
-        address remotePlug_,
-        string memory integrationType_
-    ) external {
-        bytes32 integrationType = keccak256(abi.encode(integrationType_));
-        if (!configExists[integrationType][remoteChainSlug_])
-            revert InvalidIntegrationType();
+    function connect(
+        uint256 siblingChainSlug_,
+        address siblingPlug_,
+        address inboundSwitchboard_,
+        address outboundSwitchboard_
+    ) external override {
+        if (
+            !configExists[inboundSwitchboard_][siblingChainSlug_] ||
+            !configExists[outboundSwitchboard_][siblingChainSlug_]
+        ) revert InvalidConnection();
 
         PlugConfig storage plugConfig = plugConfigs[msg.sender][
-            remoteChainSlug_
+            siblingChainSlug_
         ];
 
-        plugConfig.remotePlug = remotePlug_;
-        plugConfig.integrationType = integrationType;
-    }
+        plugConfig.siblingPlug = siblingPlug_;
+        plugConfig.inboundSwitchboard = inboundSwitchboard_;
+        plugConfig.outboundSwitchboard = outboundSwitchboard_;
 
-    function getPlugConfig(
-        uint256 remoteChainSlug_,
-        address plug_
-    )
-        external
-        view
-        returns (
-            address accum,
-            address deaccum,
-            address verifier,
-            address remotePlug,
-            bytes32 integrationType
-        )
-    {
-        PlugConfig memory plugConfig = plugConfigs[plug_][remoteChainSlug_];
-        return (
+        emit PlugConnected(
+            msg.sender,
+            siblingChainSlug_,
+            siblingPlug_,
+            inboundSwitchboard_,
+            outboundSwitchboard_,
             address(0),
-            address(0),
-            address(0),
-            plugConfig.remotePlug,
-            plugConfig.integrationType
+            address(0)
         );
     }
 
     function outbound(
-        uint256 remoteChainSlug_,
+        uint256 siblingChainSlug_,
         uint256 msgGasLimit_,
         bytes calldata payload_
-    ) external payable {
+    ) external payable override returns (uint256) {
         PlugConfig memory srcPlugConfig = plugConfigs[msg.sender][
-            remoteChainSlug_
+            siblingChainSlug_
         ];
 
-        PlugConfig memory dstPlugConfig = plugConfigs[srcPlugConfig.remotePlug][
-            _chainSlug
-        ];
+        PlugConfig memory dstPlugConfig = plugConfigs[
+            srcPlugConfig.siblingPlug
+        ][_chainSlug];
 
-        if (dstPlugConfig.remotePlug != msg.sender) revert WrongRemotePlug();
-        if (dstPlugConfig.integrationType != srcPlugConfig.integrationType)
-            revert WrongIntegrationType();
-        IPlug(srcPlugConfig.remotePlug).inbound{gas: msgGasLimit_}(
+        if (dstPlugConfig.siblingPlug != msg.sender) revert WrongSiblingPlug();
+        IPlug(srcPlugConfig.siblingPlug).inbound{gas: msgGasLimit_}(
+            siblingChainSlug_,
             payload_
+        );
+
+        return 1;
+    }
+
+    function getPlugConfig(
+        address plugAddress_,
+        uint256 siblingChainSlug_
+    )
+        external
+        view
+        returns (
+            address siblingPlug,
+            address inboundSwitchboard__,
+            address outboundSwitchboard__,
+            address capacitor__,
+            address decapacitor__
+        )
+    {
+        PlugConfig memory plugConfig = plugConfigs[plugAddress_][
+            siblingChainSlug_
+        ];
+        return (
+            plugConfig.siblingPlug,
+            plugConfig.inboundSwitchboard,
+            plugConfig.outboundSwitchboard,
+            address(0),
+            address(0)
         );
     }
 }

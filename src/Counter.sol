@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity 0.8.7;
 
 import {PlugBase} from "./templates/PlugBase.sol";
 
 contract Counter is PlugBase {
     uint256 public number;
-    uint256 constant public destGasLimit = 1000000;
+    uint256 public constant destGasLimit = 1000000;
 
     constructor(address _socket) PlugBase(_socket) {
         owner = msg.sender;
@@ -16,10 +16,13 @@ contract Counter is PlugBase {
     }
 
     function setNumber(uint256 newNumber, uint256 toChainSlug) public payable {
-        outbound(toChainSlug, destGasLimit, msg.value,abi.encode(newNumber));
+        outbound(toChainSlug, destGasLimit, msg.value, abi.encode(newNumber));
     }
 
-    function _receiveInbound(bytes memory payload_) internal virtual override{ 
+    function _receiveInbound(
+        uint256,
+        bytes memory payload_
+    ) internal virtual override {
         uint256 newNumber = abi.decode(payload_, (uint256));
         setNumber(newNumber);
     }
