@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity 0.8.7;
 
 import "forge-std/Test.sol";
 import "../src/Counter.sol";
@@ -11,21 +11,32 @@ contract CounterTest is Test {
     MockSocket public mockSocket__;
 
     uint256 chainSlug_ = 1;
-    uint256 remoteChainSlug_ = 2;
-    string integrationType = "FAST";
+    uint256 siblingChainSlug_ = 2;
+    address public constant fastSwitchboard = address(1);
+    address public constant optimisticSwitchboard = address(2);
 
     function setUp() public {
-        mockSocket__ = new MockSocket(chainSlug_, remoteChainSlug_);
-        
+        mockSocket__ = new MockSocket(chainSlug_, siblingChainSlug_);
+
         srcCounter__ = new Counter(address(mockSocket__));
         dstCounter__ = new Counter(address(mockSocket__));
 
-        dstCounter__.connect(chainSlug_, address(srcCounter__), integrationType);
-        srcCounter__.connect(remoteChainSlug_, address(dstCounter__), integrationType);
+        dstCounter__.connect(
+            chainSlug_,
+            address(srcCounter__),
+            fastSwitchboard,
+            fastSwitchboard
+        );
+        srcCounter__.connect(
+            siblingChainSlug_,
+            address(dstCounter__),
+            fastSwitchboard,
+            fastSwitchboard
+        );
     }
 
     function testSetNumber(uint256 x) public {
-        srcCounter__.setNumber(x, remoteChainSlug_);
+        srcCounter__.setNumber(x, siblingChainSlug_);
         assertEq(dstCounter__.number(), x);
     }
 }
