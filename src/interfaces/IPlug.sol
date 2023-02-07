@@ -1,11 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity 0.8.7;
 
 interface IPlug {
     /**
      * @notice executes the message received from source chain
      * @dev this should be only executable by socket
+     * @param siblingChainSlug_ chain slug of source
      * @param payload_ the data which is needed by plug at inbound call on destination
      */
-    function inbound(bytes calldata payload_) external payable;
+    function inbound(
+        uint256 siblingChainSlug_,
+        bytes calldata payload_
+    ) external;
 }

@@ -1,33 +1,17 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity 0.8.7;
 
 interface ISocket {
-    // to handle stack too deep
-    struct VerificationParams {
-        uint256 remoteChainSlug;
-        uint256 packetId;
-        bytes deaccumProof;
-    }
-
-    // TODO: add confs and blocking/non-blocking
-    struct PlugConfig {
-        address remotePlug;
-        address accum;
-        address deaccum;
-        address verifier;
-        bytes32 integrationType;
-    }
-
     /**
      * @notice emits the message details when a new message arrives at outbound
-     * @param localChainSlug local chain id
+     * @param localChainSlug local chain slug
      * @param localPlug local plug address
-     * @param dstChainSlug remote chain id
-     * @param dstPlug remote plug address
-     * @param msgId message id packed with remoteChainSlug and nonce
-     * @param msgGasLimit gas limit needed to execute the inbound at remote
+     * @param dstChainSlug sibling chain slug
+     * @param dstPlug sibling plug address
+     * @param msgId message id packed with siblingChainSlug and nonce
+     * @param msgGasLimit gas limit needed to execute the inbound at destination
      * @param fees fees provided by msg sender
-     * @param payload the data which will be used by inbound at remote
+     * @param payload the data which will be used by inbound at destination
      */
     event MessageTransmitted(
         uint256 localChainSlug,
@@ -36,84 +20,57 @@ interface ISocket {
         address dstPlug,
         uint256 msgId,
         uint256 msgGasLimit,
+        uint256 executionFee,
         uint256 fees,
         bytes payload
     );
 
-    event ConfigAdded(
-        address accum_,
-        address deaccum_,
-        address verifier_,
-        uint256 remoteChainSlug_,
-        bytes32 integrationType_
-    );
-
     /**
-     * @notice emits the status of message after inbound call
-     * @param msgId msg id which is executed
+     * @notice emits the config set by a plug for a sibling
+     * @param plug address of plug on current chain
+     * @param siblingChainSlug sibling chain slug
+     * @param siblingPlug address of plug on sibling chain
+     * @param inboundSwitchboard inbound switchboard (select from registered options)
+     * @param outboundSwitchboard outbound switchboard (select from registered options)
+     * @param capacitor capacitor selected based on outbound switchboard
+     * @param decapacitor decapacitor selected based on inbound switchboard
      */
-    event ExecutionSuccess(uint256 msgId);
-
-    /**
-     * @notice emits the status of message after inbound call
-     * @param msgId msg id which is executed
-     * @param result if message reverts, returns the revert message
-     */
-    event ExecutionFailed(uint256 msgId, string result);
-
-    /**
-     * @notice emits the error message in bytes after inbound call
-     * @param msgId msg id which is executed
-     * @param result if message reverts, returns the revert message in bytes
-     */
-    event ExecutionFailedBytes(uint256 msgId, bytes result);
-
-    event PlugConfigSet(
-        address remotePlug,
-        uint256 remoteChainSlug,
-        bytes32 integrationType
+    event PlugConnected(
+        address plug,
+        uint256 siblingChainSlug,
+        address siblingPlug,
+        address inboundSwitchboard,
+        address outboundSwitchboard,
+        address capacitor,
+        address decapacitor
     );
 
     /**
      * @notice registers a message
-     * @dev Packs the message and includes it in a packet with accumulator
-     * @param remoteChainSlug_ the remote chain id
-     * @param msgGasLimit_ the gas limit needed to execute the payload on remote
-     * @param payload_ the data which is needed by plug at inbound call on remote
+     * @dev Packs the message and includes it in a packet with capacitor
+     * @param siblingChainSlug_ the sibling chain slug
+     * @param msgGasLimit_ the gas limit needed to execute the payload on destination
+     * @param payload_ the data which is needed by plug at inbound call on destination
      */
     function outbound(
-        uint256 remoteChainSlug_,
+        uint256 siblingChainSlug_,
         uint256 msgGasLimit_,
         bytes calldata payload_
-    ) external payable;
-
-    /**
-     * @notice executes a message
-     * @param msgGasLimit gas limit needed to execute the inbound at remote
-     * @param msgId message id packed with remoteChainSlug and nonce
-     * @param localPlug remote plug address
-     * @param payload the data which is needed by plug at inbound call on remote
-     * @param verifyParams_ the details needed for message verification
-     */
-    function execute(
-        uint256 msgGasLimit,
-        uint256 msgId,
-        address localPlug,
-        bytes calldata payload,
-        ISocket.VerificationParams calldata verifyParams_
-    ) external;
+    ) external payable returns (uint256 msgId);
 
     /**
      * @notice sets the config specific to the plug
-     * @param remoteChainSlug_ the remote chain id
-     * @param remotePlug_ address of plug present at remote chain to call inbound
-     * @param integrationType_ the name of accum to be used
+     * @param siblingChainSlug_ the sibling chain slug
+     * @param siblingPlug_ address of plug present at sibling chain to call inbound
+     * @param inboundSwitchboard_ the address of switchboard to use for receiving messages
+     * @param outboundSwitchboard_ the address of switchboard to use for sending messages
      */
-    function setPlugConfig(
-        uint256 remoteChainSlug_,
-        address remotePlug_,
-        string memory integrationType_
+    function connect(
+        uint256 siblingChainSlug_,
+        address siblingPlug_,
+        address inboundSwitchboard_,
+        address outboundSwitchboard_
     ) external;
 
-    function chainSlug() external returns (uint256);
+    function _chainSlug() external view returns (uint256);
 }
