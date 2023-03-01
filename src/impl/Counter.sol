@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.13;
 
-import {PlugBase} from "./templates/PlugBase.sol";
+import {PlugBase} from "../base/PlugBase.sol";
 
 contract Counter is PlugBase {
     uint256 public number;
