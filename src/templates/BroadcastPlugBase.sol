@@ -8,7 +8,7 @@ abstract contract BroadcastPlugBase is PlugBase {
         uint256 gasLimit,
         uint256[] calldata chainSlugs,
         uint256[] calldata fees,
-        bytes calldata message
+        bytes memory message
     ) internal {
         for (uint256 index = 0; index < chainSlugs.length; index++) {
             outbound(chainSlugs[index], gasLimit, fees[index], message);

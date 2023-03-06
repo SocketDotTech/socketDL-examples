@@ -48,19 +48,7 @@ abstract contract PlugBase {
         bytes calldata payload_
     ) external payable {
         require(msg.sender == address(socket), "no auth");
-
-        (bytes memory payload, bool canExecute) = _beforeInbound(
-            siblingChainSlug_,
-            payload_
-        );
-        if (canExecute) _receiveInbound(siblingChainSlug_, payload);
-    }
-
-    function _beforeInbound(
-        uint256,
-        bytes memory payload_
-    ) internal virtual returns (bytes memory, bool canExecute) {
-        return (payload_, true);
+        _receiveInbound(siblingChainSlug_, payload_);
     }
 
     function _receiveInbound(
