@@ -5,15 +5,10 @@ import {PlugBase} from "../base/PlugBase.sol";
 import "../lib/BytesLib.sol";
 
 abstract contract SequentialPlugBase is PlugBase {
-    uint256 internal _msgCounter;
-    uint256 private _offset;
+    uint256 internal _msgCounter = 1;
 
     uint256 public latestMsgExecuted;
     mapping(uint256 => mapping(bytes => bool)) public executionBook;
-
-    constructor(uint256 offset_) {
-        _offset = offset_;
-    }
 
     function _addCounter(
         bytes memory message_
@@ -34,8 +29,9 @@ abstract contract SequentialPlugBase is PlugBase {
     function _checkSequence(
         bytes memory payload_
     ) internal returns (bytes memory message, bool canExecute) {
+        uint256 pos = payload_.length - 32;
         uint256 msgCounter = uint256(
-            bytes32(BytesLib.slice(payload_, _offset, 32))
+            bytes32(BytesLib.slice(payload_, pos, 32))
         );
 
         if (msgCounter == latestMsgExecuted + 1) {
@@ -44,9 +40,7 @@ abstract contract SequentialPlugBase is PlugBase {
             latestMsgExecuted++;
         }
 
-        uint256 len = payload_.length - 32;
-        message = BytesLib.slice(payload_, 0, len);
-
+        message = BytesLib.slice(payload_, 0, pos);
         return (message, canExecute);
     }
 }

@@ -9,7 +9,7 @@ abstract contract BatchPlugBase is PlugBase {
         uint256[] memory chainSlugs_,
         uint256[] memory fees_,
         bytes[] memory payloads_,
-        function(bytes memory) external returns (bytes memory) createPayload_
+        function(bytes memory) internal returns (bytes memory) createPayload_
     ) internal {
         for (uint256 index = 0; index < chainSlugs_.length; index++) {
             bytes memory message = createPayload_(payloads_[index]);

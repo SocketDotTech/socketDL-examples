@@ -9,7 +9,7 @@ abstract contract UnicastPlugBase is PlugBase {
         uint256 gasLimit_,
         uint256 fees_,
         bytes[] memory payloads_,
-        function(bytes memory) external returns (bytes memory) createPayload_
+        function(bytes memory) internal returns (bytes memory) createPayload_
     ) internal {
         uint256 feesPerMessage = fees_ / payloads_.length;
         for (uint256 index = 0; index < payloads_.length; index++) {

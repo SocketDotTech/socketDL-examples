@@ -5,12 +5,6 @@ import {PlugBase} from "../base/PlugBase.sol";
 import "../lib/BytesLib.sol";
 
 abstract contract SourceSenderPlugBase is PlugBase {
-    uint256 private _offset;
-
-    constructor(uint256 offset_) {
-        _offset = offset_;
-    }
-
     function _outboundWithSender(
         uint256 gasLimit_,
         uint256 chainSlug_,
@@ -33,14 +27,15 @@ abstract contract SourceSenderPlugBase is PlugBase {
 
     function _getSender(
         bytes memory payload_
-    ) internal view returns (bytes memory message, address sender) {
+    ) internal pure returns (bytes memory message, address sender) {
+        uint256 pos = payload_.length - 32;
+
+        // pos is increased by 12 (32 - 20) to avoid empty bytes
         address msgSender = address(
-            bytes20(BytesLib.slice(payload_, _offset, 20))
+            bytes20(BytesLib.slice(payload_, pos + 12, 20))
         );
 
-        uint256 len = payload_.length - 20;
-        message = BytesLib.slice(payload_, 0, len);
-
+        message = BytesLib.slice(payload_, 0, pos);
         return (message, msgSender);
     }
 }
