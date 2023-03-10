@@ -29,12 +29,11 @@ contract ProCounter is
         owner = msg.sender;
     }
 
-    function setNumber(uint256 newNumber) public {
-        number = newNumber;
-    }
-
-    function setNumber(uint256 newNumber, uint256 toChainSlug) public payable {
-        outbound(toChainSlug, destGasLimit, msg.value, abi.encode(newNumber));
+    function setNumber(
+        uint256 newNumber_,
+        uint256 toChainSlug_
+    ) external payable {
+        _outbound(toChainSlug_, destGasLimit, msg.value, abi.encode(newNumber_));
     }
 
     function createPayload(
@@ -48,28 +47,34 @@ contract ProCounter is
     }
 
     function setSequentialNumbers(
-        uint256 start,
-        uint256 end,
-        uint256[] memory toChainSlugs,
-        uint256[] memory fees
+        uint256 start_,
+        uint256 end_,
+        uint256[] memory toChainSlugs_,
+        uint256[] memory fees_
     ) external payable {
         bytes[] memory payloads;
         uint256[] memory destGasLimits;
 
-        for (uint256 index = 0; index < end - start; index++) {
-            payloads[index] = abi.encode(start + index);
+        for (uint256 index = 0; index < end_ - start_; index++) {
+            payloads[index] = abi.encode(start_ + index);
             destGasLimits[index] = destGasLimit;
         }
 
-        _batch(destGasLimits, toChainSlugs, fees, payloads, this.createPayload);
+        _batch(
+            destGasLimits,
+            toChainSlugs_,
+            fees_,
+            payloads,
+            this.createPayload
+        );
     }
 
     function broadcastNumber(
-        uint256 newNumber,
-        uint256[] calldata toChainSlugs,
-        uint256[] calldata fees
-    ) public payable {
-        bytes memory payload = abi.encode(newNumber);
+        uint256 newNumber_,
+        uint256[] calldata toChainSlugs_,
+        uint256[] calldata fees_
+    ) external payable {
+        bytes memory payload = abi.encode(newNumber_);
 
         // append sequential counter
         payload = _addCounter(payload);
@@ -77,7 +82,11 @@ contract ProCounter is
         // append msg sender
         payload = _addSender(payload);
 
-        _broadcast(destGasLimit, toChainSlugs, fees, payload);
+        _broadcast(destGasLimit, toChainSlugs_, fees_, payload);
+    }
+
+    function setNumber(uint256 newNumber_) public {
+        number = newNumber_;
     }
 
     function _receiveInbound(

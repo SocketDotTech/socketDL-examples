@@ -7,8 +7,18 @@ import "../lib/BytesLib.sol";
 abstract contract SourceSenderPlugBase is PlugBase {
     uint256 private _offset;
 
-    constructor(uint256 offset) {
-        _offset = offset;
+    constructor(uint256 offset_) {
+        _offset = offset_;
+    }
+
+    function _outboundWithSender(
+        uint256 gasLimit_,
+        uint256 chainSlug_,
+        uint256 fees_,
+        bytes memory message_
+    ) internal {
+        bytes memory newPayload = _addSender(message_);
+        PlugBase._outbound(chainSlug_, gasLimit_, fees_, newPayload);
     }
 
     function _addSender(
@@ -19,16 +29,6 @@ abstract contract SourceSenderPlugBase is PlugBase {
                 message_,
                 bytes32(uint256(uint160(address(msg.sender))))
             );
-    }
-
-    function _outbound(
-        uint256 gasLimit,
-        uint256 chainSlug,
-        uint256 fees,
-        bytes memory message
-    ) internal {
-        bytes memory newPayload = _addSender(message);
-        outbound(chainSlug, gasLimit, fees, newPayload);
     }
 
     function _getSender(

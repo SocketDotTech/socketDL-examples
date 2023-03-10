@@ -72,5 +72,9 @@ interface ISocket {
         address outboundSwitchboard_
     ) external;
 
-    function _chainSlug() external view returns (uint256);
+    /**
+     * @notice returns chain slug
+     * @return chainSlug current chain slug
+     */
+    function _chainSlug() external view returns (uint256 chainSlug);
 }

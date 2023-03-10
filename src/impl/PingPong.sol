@@ -13,22 +13,22 @@ contract PingPong is PlugBase {
     event Ping(uint256 pings);
 
     // constructor requires the socket address for this chain
-    constructor(address _socket) PlugBase(_socket) {
-        localChainSlug = getChainSlug();
+    constructor(address socket_) PlugBase(socket_) {
+        localChainSlug = _getChainSlug();
     }
 
     // pings the destination chain, along with the current number of pings sent
     function ping(
-        uint256 toChainSlug, // send a ping to this destination slug
-        uint256 pings // the number of pings
+        uint256 toChainSlug_, // send a ping to this destination slug
+        uint256 pings_ // the number of pings
     ) public payable {
         require(address(this).balance > 0, "no gas");
 
-        emit Ping(++pings);
+        emit Ping(++pings_);
 
         // encode the payload with the number of pings
-        bytes memory payload = abi.encode(pings, localChainSlug);
-        outbound(toChainSlug, destGasLimit, fees, payload);
+        bytes memory payload = abi.encode(pings_, localChainSlug);
+        _outbound(toChainSlug_, destGasLimit, fees, payload);
     }
 
     function _receiveInbound(

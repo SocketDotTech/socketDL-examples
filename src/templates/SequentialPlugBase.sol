@@ -11,8 +11,8 @@ abstract contract SequentialPlugBase is PlugBase {
     uint256 public latestMsgExecuted;
     mapping(uint256 => mapping(bytes => bool)) public executionBook;
 
-    constructor(uint256 offset) {
-        _offset = offset;
+    constructor(uint256 offset_) {
+        _offset = offset_;
     }
 
     function _addCounter(
@@ -21,14 +21,14 @@ abstract contract SequentialPlugBase is PlugBase {
         return abi.encodePacked(message_, _msgCounter++);
     }
 
-    function sequentialOutbound(
-        uint256 gasLimit,
-        uint256 chainSlug,
-        uint256 fees,
-        bytes memory message
+    function _sequentialOutbound(
+        uint256 gasLimit_,
+        uint256 chainSlug_,
+        uint256 fees_,
+        bytes memory message_
     ) internal {
-        bytes memory newPayload = _addCounter(message);
-        PlugBase.outbound(chainSlug, gasLimit, fees, newPayload);
+        bytes memory newPayload = _addCounter(message_);
+        _outbound(chainSlug_, gasLimit_, fees_, newPayload);
     }
 
     function _checkSequence(

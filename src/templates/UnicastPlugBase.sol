@@ -5,16 +5,16 @@ import {PlugBase} from "../base/PlugBase.sol";
 
 abstract contract UnicastPlugBase is PlugBase {
     function _unicast(
-        uint256 chainSlug,
-        uint256 gasLimit,
-        uint256 fees,
+        uint256 chainSlug_,
+        uint256 gasLimit_,
+        uint256 fees_,
         bytes[] memory payloads_,
-        function(bytes memory) external returns (bytes memory) getPayload
+        function(bytes memory) external returns (bytes memory) createPayload_
     ) internal {
-        uint256 feesPerMessage = fees / payloads_.length;
+        uint256 feesPerMessage = fees_ / payloads_.length;
         for (uint256 index = 0; index < payloads_.length; index++) {
-            bytes memory message = getPayload(payloads_[index]);
-            outbound(chainSlug, gasLimit, feesPerMessage, message);
+            bytes memory message = createPayload_(payloads_[index]);
+            _outbound(chainSlug_, gasLimit_, feesPerMessage, message);
         }
     }
 }

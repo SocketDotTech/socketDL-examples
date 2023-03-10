@@ -7,16 +7,19 @@ contract Counter is PlugBase {
     uint256 public number;
     uint256 public constant destGasLimit = 1000000;
 
-    constructor(address _socket) PlugBase(_socket) {
+    constructor(address socket_) PlugBase(socket_) {
         owner = msg.sender;
     }
 
-    function setNumber(uint256 newNumber) public {
-        number = newNumber;
+    function setNumber(
+        uint256 newNumber_,
+        uint256 toChainSlug_
+    ) external payable {
+        _outbound(toChainSlug_, destGasLimit, msg.value, abi.encode(newNumber_));
     }
 
-    function setNumber(uint256 newNumber, uint256 toChainSlug) public payable {
-        outbound(toChainSlug, destGasLimit, msg.value, abi.encode(newNumber));
+    function setNumber(uint256 newNumber_) public {
+        number = newNumber_;
     }
 
     function _receiveInbound(

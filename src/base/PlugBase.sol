@@ -7,9 +7,9 @@ abstract contract PlugBase {
     address public owner;
     ISocket socket;
 
-    constructor(address _socket) {
+    constructor(address socket_) {
         owner = msg.sender;
-        socket = ISocket(_socket);
+        socket = ISocket(socket_);
     }
 
     //
@@ -34,15 +34,6 @@ abstract contract PlugBase {
         );
     }
 
-    function outbound(
-        uint256 chainSlug,
-        uint256 gasLimit,
-        uint256 fees,
-        bytes memory payload
-    ) internal {
-        socket.outbound{value: fees}(chainSlug, gasLimit, payload);
-    }
-
     function inbound(
         uint256 siblingChainSlug_,
         bytes calldata payload_
@@ -51,14 +42,25 @@ abstract contract PlugBase {
         _receiveInbound(siblingChainSlug_, payload_);
     }
 
+    function _outbound(
+        uint256 chainSlug_,
+        uint256 gasLimit_,
+        uint256 fees_,
+        bytes memory payload_
+    ) internal {
+        socket.outbound{value: fees_}(chainSlug_, gasLimit_, payload_);
+    }
+
     function _receiveInbound(
         uint256 siblingChainSlug_,
         bytes memory payload_
     ) internal virtual;
 
-    function getChainSlug() internal view returns (uint256) {
+    function _getChainSlug() internal view returns (uint256) {
         return socket._chainSlug();
     }
+
+    // owner related functions
 
     function removeOwner() external onlyOwner {
         owner = address(0);
