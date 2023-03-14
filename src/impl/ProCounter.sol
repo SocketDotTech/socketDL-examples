@@ -124,6 +124,6 @@ contract ProCounter is
         (bytes memory tmpMsg, address sender) = _getSender(payload_);
 
         if (sender != owner) revert InvalidSender();
-        (message, canExecute) = _checkSequence(tmpMsg);
+        message = _checkSequence(tmpMsg);
     }
 }

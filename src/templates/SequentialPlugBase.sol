@@ -8,7 +8,8 @@ abstract contract SequentialPlugBase is PlugBase {
     uint256 internal _msgCounter = 1;
 
     uint256 public latestMsgExecuted;
-    mapping(uint256 => mapping(bytes => bool)) public executionBook;
+
+    error NotInOrder();
 
     function _addCounter(
         bytes memory message_
@@ -28,19 +29,15 @@ abstract contract SequentialPlugBase is PlugBase {
 
     function _checkSequence(
         bytes memory payload_
-    ) internal returns (bytes memory message, bool canExecute) {
+    ) internal returns (bytes memory message) {
         uint256 pos = payload_.length - 32;
         uint256 msgCounter = uint256(
             bytes32(BytesLib.slice(payload_, pos, 32))
         );
 
-        if (msgCounter == latestMsgExecuted + 1) {
-            canExecute = true;
-            executionBook[msgCounter][payload_] = true;
-            latestMsgExecuted++;
-        }
+        if (msgCounter != latestMsgExecuted + 1) revert NotInOrder();
+        latestMsgExecuted++;
 
         message = BytesLib.slice(payload_, 0, pos);
-        return (message, canExecute);
     }
 }
