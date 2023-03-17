@@ -76,5 +76,5 @@ interface ISocket {
      * @notice returns chain slug
      * @return chainSlug current chain slug
      */
-    function _chainSlug() external view returns (uint256 chainSlug);
+    function chainSlug() external view returns (uint256 chainSlug);
 }
