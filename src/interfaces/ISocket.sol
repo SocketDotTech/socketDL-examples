@@ -18,7 +18,7 @@ interface ISocket {
         address localPlug,
         uint256 dstChainSlug,
         address dstPlug,
-        uint256 msgId,
+        bytes32 msgId,
         uint256 msgGasLimit,
         uint256 executionFee,
         uint256 fees,
@@ -56,7 +56,7 @@ interface ISocket {
         uint256 siblingChainSlug_,
         uint256 msgGasLimit_,
         bytes calldata payload_
-    ) external payable returns (uint256 msgId);
+    ) external payable returns (bytes32 msgId);
 
     /**
      * @notice sets the config specific to the plug

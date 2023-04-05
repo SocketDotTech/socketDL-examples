@@ -57,7 +57,7 @@ abstract contract PlugBase {
     ) internal virtual;
 
     function _getChainSlug() internal view returns (uint256) {
-        return socket._chainSlug();
+        return socket.chainSlug();
     }
 
     // owner related functions
