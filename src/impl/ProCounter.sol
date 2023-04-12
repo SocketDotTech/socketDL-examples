@@ -127,7 +127,10 @@ contract ProCounter is
     ) internal returns (bytes memory message, bool canExecute) {
         (bytes memory tmpMsg, address sender) = _getSender(payload_);
 
-        if (sender != owner) revert InvalidSender();
+        if (sender != owner) return (tmpMsg, false);
+
         message = _checkSequence(tmpMsg);
+
+        return (message, true);
     }
 }
