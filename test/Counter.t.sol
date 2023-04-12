@@ -36,7 +36,7 @@ contract CounterTest is Test {
     }
 
     function testSetNumber(uint256 x) public {
-        srcCounter__.setNumber(x, siblingChainSlug_);
+        srcCounter__.setRemoteNumber(x, siblingChainSlug_);
         assertEq(dstCounter__.number(), x);
     }
 }

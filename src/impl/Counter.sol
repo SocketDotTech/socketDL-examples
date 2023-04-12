@@ -11,14 +11,23 @@ contract Counter is PlugBase {
         owner = msg.sender;
     }
 
-    function setNumber(
+    function setRemoteNumber(
         uint256 newNumber_,
         uint256 toChainSlug_
     ) external payable {
-        _outbound(toChainSlug_, destGasLimit, msg.value, abi.encode(newNumber_));
+        _outbound(
+            toChainSlug_,
+            destGasLimit,
+            msg.value,
+            abi.encode(newNumber_)
+        );
     }
 
-    function setNumber(uint256 newNumber_) public {
+    function setLocalNumber(uint256 newNumber_) external {
+        setNumber(newNumber_);
+    }
+
+    function setNumber(uint256 newNumber_) internal {
         number = newNumber_;
     }
 
