@@ -2,7 +2,7 @@
 pragma solidity 0.8.13;
 
 import "forge-std/Test.sol";
-import "../src/Counter.sol";
+import "../src/impl/Counter.sol";
 import "../src/mocks/MockSocket.sol";
 
 contract CounterTest is Test {
@@ -36,7 +36,7 @@ contract CounterTest is Test {
     }
 
     function testSetNumber(uint256 x) public {
-        srcCounter__.setNumber(x, siblingChainSlug_);
+        srcCounter__.setRemoteNumber(x, siblingChainSlug_);
         assertEq(dstCounter__.number(), x);
     }
 }

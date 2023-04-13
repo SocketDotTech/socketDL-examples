@@ -5,7 +5,7 @@ import "../interfaces/ISocket.sol";
 import "../interfaces/IPlug.sol";
 
 contract MockSocket is ISocket {
-    uint256 public immutable override _chainSlug;
+    uint256 public immutable override chainSlug;
 
     address public constant fastSwitchboard = address(1);
     address public constant optimisticSwitchboard = address(2);
@@ -27,7 +27,7 @@ contract MockSocket is ISocket {
     error InvalidConnection();
 
     constructor(uint256 chainSlug_, uint256 siblingChainSlug_) {
-        _chainSlug = chainSlug_;
+        chainSlug = chainSlug_;
 
         configExists[fastSwitchboard][siblingChainSlug_] = true;
         configExists[optimisticSwitchboard][siblingChainSlug_] = true;
@@ -70,14 +70,14 @@ contract MockSocket is ISocket {
         uint256 siblingChainSlug_,
         uint256 msgGasLimit_,
         bytes calldata payload_
-    ) external payable override returns (uint256) {
+    ) external payable override returns (bytes32) {
         PlugConfig memory srcPlugConfig = plugConfigs[msg.sender][
             siblingChainSlug_
         ];
 
         PlugConfig memory dstPlugConfig = plugConfigs[
             srcPlugConfig.siblingPlug
-        ][_chainSlug];
+        ][chainSlug];
 
         if (dstPlugConfig.siblingPlug != msg.sender) revert WrongSiblingPlug();
         IPlug(srcPlugConfig.siblingPlug).inbound{gas: msgGasLimit_}(
@@ -85,7 +85,7 @@ contract MockSocket is ISocket {
             payload_
         );
 
-        return 1;
+        return bytes32(0);
     }
 
     function getPlugConfig(
