@@ -43,7 +43,7 @@ contract ProCounterTest is Test {
         uint256 x = 55;
 
         hoax(counterOwner);
-        srcProCounter__.setNumber(x, siblingChainSlug_);
+        srcProCounter__.setRemoteNumber(x, siblingChainSlug_);
 
         assertEq(dstProCounter__.number(), x);
     }

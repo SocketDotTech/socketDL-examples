@@ -23,7 +23,7 @@ contract ProCounter is
         owner = msg.sender;
     }
 
-    function setNumber(
+    function setRemoteNumber(
         uint256 newNumber_,
         uint256 toChainSlug_
     ) external payable {
@@ -102,7 +102,11 @@ contract ProCounter is
         _unicast(toChainSlug_, destGasLimit, fees_, payloads, createPayload);
     }
 
-    function setNumber(uint256 newNumber_) public {
+    function setLocalNumber(uint256 newNumber_) external {
+        setNumber(newNumber_);
+    }
+
+    function setNumber(uint256 newNumber_) internal {
         number = newNumber_;
     }
 
@@ -123,7 +127,10 @@ contract ProCounter is
     ) internal returns (bytes memory message, bool canExecute) {
         (bytes memory tmpMsg, address sender) = _getSender(payload_);
 
-        if (sender != owner) revert InvalidSender();
+        if (sender != owner) return (tmpMsg, false);
+
         message = _checkSequence(tmpMsg);
+
+        return (message, true);
     }
 }
