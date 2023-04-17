@@ -1,6 +1,6 @@
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import {ISocket} from "../../interfaces/ISocket.sol";
 
 contract uniERC20 is ERC20 {
@@ -13,11 +13,26 @@ contract uniERC20 is ERC20 {
     constructor(
         uint256 initialSupply,
         address _socket,
-        string tokenName,
-        string tokenSymbol
+        string memory tokenName,
+        string memory tokenSymbol
     ) ERC20(tokenName, tokenSymbol) {
         socket = _socket;
         _mint(msg.sender, initialSupply);
+    }
+
+    //  Add owner
+    function connectUniTokenToSiblings(
+        uint256 siblingChainSlug_,
+        address siblingPlug_,
+        address inboundSwitchboard_,
+        address outboundSwitchboard_
+    ) external {
+        ISocket(socket).connect(
+            siblingChainSlug_,
+            siblingPlug_,
+            inboundSwitchboard_,
+            outboundSwitchboard_
+        );
     }
 
     //  Add owner
@@ -30,7 +45,8 @@ contract uniERC20 is ERC20 {
         destGasLimits[_chainSlug] = _gasLimit;
     }
 
-    function addUniPlug(uint _chainSlug, address _uniTokenAddress) {
+    // Add owner
+    function addUniPlug(uint _chainSlug, address _uniTokenAddress) public {
         uniPlugs[_chainSlug] = _uniTokenAddress;
     }
 
@@ -45,9 +61,21 @@ contract uniERC20 is ERC20 {
 
         ISocket(socket).outbound(
             _destChainSlug,
-            destGasLimits(_destChainSlug),
+            destGasLimits[_destChainSlug],
             payload
         );
+    }
+
+    function _uniReceive(
+        uint256 siblingChainSlug_,
+        bytes calldata payload_
+    ) internal {
+        (address _sender, address _receiver, uint256 _amount) = abi.decode(
+            payload_,
+            (address, address, uint256)
+        );
+
+        _mint(_receiver, _amount);
     }
 
     // Make only Socket
@@ -55,18 +83,6 @@ contract uniERC20 is ERC20 {
         uint256 siblingChainSlug_,
         bytes calldata payload_
     ) public {
-        uniReceive(siblingChainSlug_, payload_);
-    }
-
-    function uniReceive(
-        uint256 siblingChainSlug_,
-        bytes calldata payload_
-    ) external payable {
-        (senderAddress, receiverAddress, sendingAmount) = abi.decode(
-            payload_,
-            (address, address, uint256)
-        );
-
-        _mint(receiverAddress, sendingAmount);
+        _uniReceive(siblingChainSlug_, payload_);
     }
 }
