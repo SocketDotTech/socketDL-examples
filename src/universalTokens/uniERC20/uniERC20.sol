@@ -7,9 +7,26 @@ import {ISocket} from "../../interfaces/ISocket.sol";
 contract uniERC20 is ERC20, Ownable {
     address public socket;
 
+    // Gas limits for executing message on destination chains
     mapping(uint256 => uint256) public destGasLimits;
 
-    mapping(uint256 => address) public uniPlugs;
+    event UniTransfer(
+        uint256 destChainSlug,
+        address destReceiver,
+        uint256 amount
+    );
+
+    event UniReceive(
+        address sender,
+        address destReceiver,
+        uint256 amount,
+        uint256 srcChainSlug
+    );
+
+    modifier onlySocket() {
+        require(msg.sender == socket, "Not authorised");
+        _;
+    }
 
     constructor(
         uint256 initialSupply,
@@ -21,8 +38,11 @@ contract uniERC20 is ERC20, Ownable {
         _mint(msg.sender, initialSupply);
     }
 
-    //  Add owner
-    function connectUniTokenToSiblings(
+    /************************************************************************
+        Config Functions 
+    ************************************************************************/
+
+    function connectRemoteToken(
         uint256 siblingChainSlug_,
         address siblingPlug_,
         address inboundSwitchboard_,
@@ -36,24 +56,22 @@ contract uniERC20 is ERC20, Ownable {
         );
     }
 
-    function changeSocketAddress(address _socket) external onlyOwner {
+    function setSocketAddress(address _socket) external onlyOwner {
         socket = _socket;
     }
 
-    function chainDestGasLimit(
+    function setDestChainGasLimit(
         uint256 _chainSlug,
         uint256 _gasLimit
     ) external onlyOwner {
         destGasLimits[_chainSlug] = _gasLimit;
     }
 
-    function addUniPlug(
-        uint _chainSlug,
-        address _uniTokenAddress
-    ) public onlyOwner {
-        uniPlugs[_chainSlug] = _uniTokenAddress;
-    }
+    /************************************************************************
+        Cross-chain Token Transfer & Receive 
+    ************************************************************************/
 
+    /* Burns user tokens on source chain and sends mint message on destination chain */
     function uniTransfer(
         uint256 _destChainSlug,
         address _destReceiver,
@@ -68,8 +86,11 @@ contract uniERC20 is ERC20, Ownable {
             destGasLimits[_destChainSlug],
             payload
         );
+
+        emit UniTransfer(_destChainSlug, _destReceiver, _amount);
     }
 
+    /* Decodes destination data and mints equivalent tokens burnt on source chain */
     function _uniReceive(
         uint256 siblingChainSlug_,
         bytes calldata payload_
@@ -80,13 +101,15 @@ contract uniERC20 is ERC20, Ownable {
         );
 
         _mint(_receiver, _amount);
+
+        emit UniReceive(_sender, _receiver, _amount, siblingChainSlug_);
     }
 
-    // Make only Socket
+    /* Called by Socket on destination chain when sending message */
     function inbound(
         uint256 siblingChainSlug_,
         bytes calldata payload_
-    ) public {
+    ) public onlySocket {
         _uniReceive(siblingChainSlug_, payload_);
     }
 }
