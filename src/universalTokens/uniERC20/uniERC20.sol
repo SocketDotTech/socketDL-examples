@@ -1,9 +1,10 @@
 pragma solidity ^0.8.0;
 
 import "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import "openzeppelin-contracts/contracts/access/Ownable.sol";
 import {ISocket} from "../../interfaces/ISocket.sol";
 
-contract uniERC20 is ERC20 {
+contract uniERC20 is ERC20, Ownable {
     address public socket;
 
     mapping(uint256 => uint256) public destGasLimits;
@@ -26,7 +27,7 @@ contract uniERC20 is ERC20 {
         address siblingPlug_,
         address inboundSwitchboard_,
         address outboundSwitchboard_
-    ) external {
+    ) external onlyOwner {
         ISocket(socket).connect(
             siblingChainSlug_,
             siblingPlug_,
@@ -35,18 +36,21 @@ contract uniERC20 is ERC20 {
         );
     }
 
-    //  Add owner
-    function changeSocketAddress(address _socket) external {
+    function changeSocketAddress(address _socket) external onlyOwner {
         socket = _socket;
     }
 
-    //  Add owner
-    function chainDestGasLimit(uint256 _chainSlug, uint256 _gasLimit) external {
+    function chainDestGasLimit(
+        uint256 _chainSlug,
+        uint256 _gasLimit
+    ) external onlyOwner {
         destGasLimits[_chainSlug] = _gasLimit;
     }
 
-    // Add owner
-    function addUniPlug(uint _chainSlug, address _uniTokenAddress) public {
+    function addUniPlug(
+        uint _chainSlug,
+        address _uniTokenAddress
+    ) public onlyOwner {
         uniPlugs[_chainSlug] = _uniTokenAddress;
     }
 
