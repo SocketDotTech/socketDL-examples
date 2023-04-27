@@ -32,9 +32,18 @@ interface ISocket {
  */
 contract HelloWorld {
     string public message;
-    uint256 destGasLimit = 100000;
     address owner;
-    address socket;
+
+    /**
+     * @dev Hardcoded values for Goerli
+     */
+    uint256 destGasLimit = 100000; // Gas cost of sending "Hello World" on Goerli
+    uint32 public remoteChainSlug = 5; // Mumbai testnet chain ID
+    address public socket = 0xDbd87a7546b3528741E4d548F2e62dF2962a7c5F; // Socket Address on Mumbai
+    address public inboundSwitchboard =
+        0x2dc464B4f5Fd55ea19f0bdF71A8dc3584eeb64d7; // FAST Switchboard on Mumbai
+    address public outboundSwitchboard =
+        0x2dc464B4f5Fd55ea19f0bdF71A8dc3584eeb64d7; // FAST Switchboard on Mumbai
 
     event MessageSent(uint256 destChainSlug, string message);
 
@@ -52,9 +61,8 @@ contract HelloWorld {
 
     error InsufficientFees();
 
-    constructor(address _socket) {
+    constructor() {
         owner = msg.sender;
-        socket = _socket;
     }
 
     /************************************************************************
@@ -64,17 +72,12 @@ contract HelloWorld {
     /**
      * @dev Configures plug to send/receive message
      */
-    function configurePlug(
-        uint256 siblingChainSlug_,
-        address siblingPlug_,
-        address inboundSwitchboard_,
-        address outboundSwitchboard_
-    ) external isOwner {
+    function connectPlug(address siblingPlug_) external isOwner {
         ISocket(socket).connect(
-            siblingChainSlug_,
+            remoteChainSlug,
             siblingPlug_,
-            inboundSwitchboard_,
-            outboundSwitchboard_
+            inboundSwitchboard,
+            outboundSwitchboard
         );
     }
 
@@ -85,41 +88,56 @@ contract HelloWorld {
         destGasLimit = _destGasLimit;
     }
 
+    function setRemoteChainSlug(uint32 _remoteChainSlug) external isOwner {
+        remoteChainSlug = _remoteChainSlug;
+    }
+
+    function setSocketAddress(address _socket) external isOwner {
+        socket = _socket;
+    }
+
+    function setSwitchboards(
+        address _inboundSwitchboard,
+        address _outboundSwitchboard
+    ) external isOwner {
+        inboundSwitchboard = _inboundSwitchboard;
+        outboundSwitchboard = _outboundSwitchboard;
+    }
+
     /************************************************************************
         Send Messages
     ************************************************************************/
 
     /**
      * @dev Sends message to remote chain HelloWorld plug
-     * @param remoteChainSlug_ Address of remote chain the message will be sent to
      */
-    function sendMessage(uint256 remoteChainSlug_) external payable {
-        uint256 totalFees = _getMinimumFees(destGasLimit, remoteChainSlug_);
+    function sendMessage() external payable {
+        uint256 totalFees = _getMinimumFees(destGasLimit, remoteChainSlug);
 
         if (msg.value < totalFees) revert InsufficientFees();
 
         bytes memory payload = abi.encode("Hello World");
 
-        ISocket(socket).outbound(remoteChainSlug_, destGasLimit, payload);
+        ISocket(socket).outbound(remoteChainSlug, destGasLimit, payload);
 
-        emit MessageSent(remoteChainSlug_, message);
+        emit MessageSent(remoteChainSlug, message);
+    }
+
+    function _getMinimumFees(
+        uint256 msgGasLimit_,
+        uint32 _remoteChainSlug
+    ) internal view returns (uint256) {
+        return
+            ISocket(socket).getMinFees(
+                msgGasLimit_,
+                _remoteChainSlug,
+                address(this)
+            );
     }
 
     /************************************************************************
         Receive Messages
     ************************************************************************/
-
-    function _getMinimumFees(
-        uint256 msgGasLimit_,
-        uint256 remoteChainSlug_
-    ) internal view returns (uint256) {
-        return
-            ISocket(socket).getMinFees(
-                msgGasLimit_,
-                uint32(remoteChainSlug_),
-                address(this)
-            );
-    }
 
     /**
      * @dev Sets new message on destination chain and emits event
