@@ -118,7 +118,7 @@ contract HelloWorld {
 
         bytes memory payload = abi.encode("Hello World");
 
-        ISocket(socket).outbound(remoteChainSlug, destGasLimit, payload);
+        ISocket(socket).outbound{value: msg.value}(remoteChainSlug, destGasLimit, payload);
 
         emit MessageSent(remoteChainSlug, message);
     }
