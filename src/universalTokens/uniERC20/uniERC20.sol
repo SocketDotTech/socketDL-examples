@@ -81,7 +81,7 @@ contract uniERC20 is ERC20, Ownable {
 
         bytes memory payload = abi.encode(msg.sender, _destReceiver, _amount);
 
-        ISocket(socket).outbound(
+        ISocket(socket).outbound{value: msg.value}(
             _destChainSlug,
             destGasLimits[_destChainSlug],
             payload

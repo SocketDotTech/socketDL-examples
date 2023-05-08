@@ -101,7 +101,7 @@ contract uniERC721 is ERC721, Ownable {
 
         bytes memory payload = abi.encode(msg.sender, _destReceiver, tokenId);
 
-        ISocket(socket).outbound(
+        ISocket(socket).outbound{value: msg.value}(
             _destChainSlug,
             destGasLimits[_destChainSlug],
             payload
