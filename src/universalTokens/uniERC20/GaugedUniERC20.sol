@@ -4,8 +4,9 @@ import "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-contracts/contracts/access/Ownable.sol";
 import {ISocket} from "../../interfaces/ISocket.sol";
 import {PlugBase} from "../../base/PlugBase.sol";
+import {Gauge} from "./extension/Gauge.sol";
 
-contract uniERC20 is ERC20, PlugBase {
+contract GaugedUniERC20 is ERC20, PlugBase, Gauge {
     /**
      * @notice destination gasLimit of executing payload for respective chains
      */
@@ -70,7 +71,13 @@ contract uniERC20 is ERC20, PlugBase {
         address _destReceiver,
         uint256 _amount
     ) external payable {
+        require(
+            checkBurnValidity(_amount, _destChainSlug),
+            "Out of limit range"
+        );
+
         _burn(msg.sender, _amount);
+        _updateBurnLimits(_amount, _destChainSlug);
 
         bytes memory payload = abi.encode(msg.sender, _destReceiver, _amount);
 
@@ -98,7 +105,13 @@ contract uniERC20 is ERC20, PlugBase {
             (address, address, uint256)
         );
 
+        require(
+            checkMintValidity(_amount, siblingChainSlug_),
+            "Out of limit range"
+        );
+
         _mint(_receiver, _amount);
+        _updateMintLimits(_amount, siblingChainSlug_);
 
         emit UniReceive(_sender, _receiver, _amount, siblingChainSlug_);
     }
