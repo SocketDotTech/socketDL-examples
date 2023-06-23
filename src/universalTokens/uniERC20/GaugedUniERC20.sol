@@ -72,12 +72,12 @@ contract GaugedUniERC20 is ERC20, PlugBase, Gauge {
         uint256 _amount
     ) external payable {
         require(
-            checkBurnValidity(_amount, _destChainSlug),
+            checkBurnValidity(_destChainSlug, _amount),
             "Out of limit range"
         );
 
         _burn(msg.sender, _amount);
-        _updateBurnLimits(_amount, _destChainSlug);
+        _useTokensBurnt(siblingChainSlug_, _amount);
 
         bytes memory payload = abi.encode(msg.sender, _destReceiver, _amount);
 
@@ -106,12 +106,12 @@ contract GaugedUniERC20 is ERC20, PlugBase, Gauge {
         );
 
         require(
-            checkMintValidity(_amount, siblingChainSlug_),
+            checkMintValidity(siblingChainSlug_, _amount),
             "Out of limit range"
         );
 
         _mint(_receiver, _amount);
-        _updateMintLimits(_amount, siblingChainSlug_);
+        _useTokensMinted(siblingChainSlug_, _amount);
 
         emit UniReceive(_sender, _receiver, _amount, siblingChainSlug_);
     }
