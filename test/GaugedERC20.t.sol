@@ -6,9 +6,9 @@ import "../src/universalTokens/uniERC20/GaugedUniERC20.sol";
 import "../src/mocks/MockSocket.sol";
 import "forge-std/console.sol";
 
-contract GaugedUniERC20Test is Test {
-    uniERC20 public srcToken__;
-    uniERC20 public dstToken__;
+contract GaugedUniERC20Test is Test, Gauge {
+    GaugedUniERC20 public srcToken__;
+    GaugedUniERC20 public dstToken__;
     MockSocket public mockSocket__;
 
     uint256 chainSlug_ = 1;
@@ -18,28 +18,16 @@ contract GaugedUniERC20Test is Test {
     address public constant optimisticSwitchboard = address(2);
     address public constant testUser = address(3);
 
-    struct Limits {
-        LimitParameters mintingLimits;
-        LimitParameters burningLimits;
-    }
-
-    struct LimitParameters {
-        uint256 timestamp;
-        uint256 ratePerSecond;
-        uint256 maxLimit;
-        uint256 currentLimit;
-    }
-
     function setUp() public {
         mockSocket__ = new MockSocket(chainSlug_, siblingChainSlug_);
         srcToken__ = new GaugedUniERC20(
-            10000000000,
+            10 ether,
             address(mockSocket__),
             "TEST 1",
             "TEST"
         );
         dstToken__ = new GaugedUniERC20(
-            10000000000,
+            10 ether,
             address(mockSocket__),
             "TEST 2",
             "TEST"
@@ -56,6 +44,8 @@ contract GaugedUniERC20Test is Test {
             fastSwitchboard,
             fastSwitchboard
         );
+
+        testSetLimits();
     }
 
     function testSetDestChainGasLimit() public {
@@ -65,22 +55,81 @@ contract GaugedUniERC20Test is Test {
     }
 
     function testSetLimits() public {
-        Limits _limits = new Limits({
-            mintingParams : ,
-            burningParams : {
-                timestamp: block.timestamp,
-                
-            }
-        })
-        srcToken__.setLimits(siblingChainSlug_, )
+        LimitParameters memory mintLimits__ = LimitParameters(
+            block.timestamp,
+            1 ether,
+            1000000 ether,
+            1000000 ether
+        );
+        LimitParameters memory burnLimits__ = LimitParameters(
+            block.timestamp,
+            1 ether,
+            10000 ether,
+            10000 ether
+        );
+
+        Limits memory _srcLimits = Limits({
+            mintingLimits: mintLimits__,
+            burningLimits: burnLimits__
+        });
+
+        Limits memory _dstLimits = Limits({
+            mintingLimits: burnLimits__,
+            burningLimits: mintLimits__
+        });
+
+        srcToken__.setLimits(siblingChainSlug_, _srcLimits);
+        dstToken__.setLimits(chainSlug_, _dstLimits);
+
+        assertEq(
+            srcToken__
+                .getBridgeLimits(siblingChainSlug_)
+                .burningLimits
+                .maxLimit,
+            _srcLimits.burningLimits.maxLimit
+        );
+        assertEq(
+            dstToken__.getBridgeLimits(chainSlug_).mintingLimits.timestamp,
+            _dstLimits.mintingLimits.timestamp
+        );
+    }
+
+    function testCheckValidity() public {
+        uint256 _mintAmount = 1000000000000 ether;
+        uint256 _burnAmount = 100 ether;
+
+        bool _srcMintBool = srcToken__.checkMintValidity(
+            siblingChainSlug_,
+            _mintAmount
+        );
+
+        bool _dstBurnBool = srcToken__.checkBurnValidity(
+            siblingChainSlug_,
+            _burnAmount
+        );
+
+        assertEq(_srcMintBool, false);
+        assertEq(_dstBurnBool, true);
     }
 
     function testUniTransfer() public {
         uint x = 100000000;
         srcToken__.setDestChainGasLimit(siblingChainSlug_, x);
 
-        uint256 _amount = 10000;
+        uint _burnLimit = srcToken__.getBurnCurrentLimit(siblingChainSlug_);
+        uint _mintLimit = dstToken__.getMintCurrentLimit(chainSlug_);
+
+        assertEq(_burnLimit, 10000 ether);
+        assertEq(_mintLimit, 10000 ether);
+
+        uint256 _amount = 1 ether;
         srcToken__.uniTransfer(siblingChainSlug_, testUser, _amount);
+
+        _burnLimit = srcToken__.getBurnCurrentLimit(siblingChainSlug_);
+        _mintLimit = dstToken__.getMintCurrentLimit(chainSlug_);
+
+        assertEq(_burnLimit, 10000 ether - _amount);
+        assertEq(_mintLimit, 10000 ether - _amount);
 
         uint256 srcBalance = srcToken__.balanceOf(testUser);
         uint256 destBalance = dstToken__.balanceOf(testUser);

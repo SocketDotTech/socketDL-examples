@@ -77,7 +77,7 @@ contract GaugedUniERC20 is ERC20, PlugBase, Gauge {
         );
 
         _burn(msg.sender, _amount);
-        _useTokensBurnt(siblingChainSlug_, _amount);
+        _useTokensBurnt(_destChainSlug, _amount);
 
         bytes memory payload = abi.encode(msg.sender, _destReceiver, _amount);
 

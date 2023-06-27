@@ -56,7 +56,7 @@ contract Gauge is AccessControl {
     ) public view returns (bool) {
         uint256 _limit = getMintCurrentLimit(_siblingChainSlug);
 
-        if (_amount >= _limit) return true;
+        if (_amount <= _limit) return true;
         return false;
     }
 
@@ -78,7 +78,7 @@ contract Gauge is AccessControl {
     ) public view returns (bool) {
         uint256 _limit = getBurnCurrentLimit(_siblingChainSlug);
 
-        if (_amount >= _limit) return true;
+        if (_amount <= _limit) return true;
         return false;
     }
 
