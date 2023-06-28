@@ -50,6 +50,11 @@ contract Gauge is AccessControl {
         return bridgeLimits[_siblingSlug];
     }
 
+    /**
+     * @notice Checks validity of token minting amount
+     * @param _siblingChainSlug chainSlug of sibling chain that triggered the mint
+     * @param _amount Amount of tokens to be minted
+     */
     function checkMintValidity(
         uint256 _siblingChainSlug,
         uint256 _amount
@@ -72,6 +77,11 @@ contract Gauge is AccessControl {
             );
     }
 
+    /**
+     * @notice Checks validity of token burning amount
+     * @param _siblingChainSlug chainSlug of sibling chain where tokens will be minted
+     * @param _amount Amount of tokens being burnt
+     */
     function checkBurnValidity(
         uint256 _siblingChainSlug,
         uint256 _amount
@@ -98,6 +108,13 @@ contract Gauge is AccessControl {
         Internal Functions
     ************************************************************************/
 
+    /**
+     * @notice Returns the current limit based on the duration passed since the limit was last updated
+     * @param _currentLimit currentLimit that was last updated at _timestamp
+     * @param _maxLimit Max limit that can be minted or burnt on current chain
+     * @param _timestamp Timestamp when the limit was updated
+     * @param _ratePerSecond Number of tokens that can be minted every second
+     */
     function _getCurrentLimit(
         uint256 _currentLimit,
         uint256 _maxLimit,
@@ -126,6 +143,11 @@ contract Gauge is AccessControl {
         _updateMintLimits(_siblingChainSlug, _amount);
     }
 
+    /**
+     * @notice Updates the currentLimit and timestamp when tokens are minted
+     * @param _siblingChainSlug chainSlug of the siblingChain
+     * @param _amount Amount of tokens minted
+     */
     function _updateMintLimits(
         uint256 _siblingChainSlug,
         uint256 _amount
@@ -145,6 +167,11 @@ contract Gauge is AccessControl {
         _updateBurnLimits(_siblingChainSlug, _amount);
     }
 
+    /**
+     * @notice Updates the currentLimit and timestamp when tokens are burned
+     * @param _siblingChainSlug chainSlug of the siblingChain
+     * @param _amount Amount of tokens burnt
+     */
     function _updateBurnLimits(
         uint256 _siblingChainSlug,
         uint256 _amount

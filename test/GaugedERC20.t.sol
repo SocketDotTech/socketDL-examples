@@ -137,4 +137,25 @@ contract GaugedUniERC20Test is Test, Gauge {
         assertEq(srcBalance, 0);
         assertEq(destBalance, _amount);
     }
+
+    function testOverLimit() public {
+        uint x = 100000000;
+        srcToken__.setDestChainGasLimit(siblingChainSlug_, x);
+
+        uint _burnLimit = srcToken__.getBurnCurrentLimit(siblingChainSlug_);
+        uint _mintLimit = dstToken__.getMintCurrentLimit(chainSlug_);
+
+        assertEq(_burnLimit, 10000 ether);
+        assertEq(_mintLimit, 10000 ether);
+
+        uint256 _amount = 100000000000 ether;
+        vm.expectRevert();
+        srcToken__.uniTransfer(siblingChainSlug_, testUser, _amount);
+
+        _burnLimit = srcToken__.getBurnCurrentLimit(siblingChainSlug_);
+        _mintLimit = dstToken__.getMintCurrentLimit(chainSlug_);
+
+        assertEq(_burnLimit, 10000 ether);
+        assertEq(_mintLimit, 10000 ether);
+    }
 }
