@@ -10,8 +10,8 @@ contract ProCounterTest is Test {
     ProCounter public dstProCounter__;
     MockSocket public mockSocket__;
 
-    uint256 chainSlug_ = 1;
-    uint256 siblingChainSlug_ = 2;
+    uint32 chainSlug_ = 1;
+    uint32 siblingChainSlug_ = 2;
     address public constant fastSwitchboard = address(1);
     address public constant optimisticSwitchboard = address(2);
     address immutable counterOwner = address(uint160(3));
@@ -49,7 +49,7 @@ contract ProCounterTest is Test {
     }
 
     function testSetSequentialNumbers() public {
-        uint256[] memory slugs = new uint256[](4);
+        uint32[] memory slugs = new uint32[](4);
         uint256[] memory fees = new uint256[](4);
 
         slugs[0] = siblingChainSlug_;
@@ -70,7 +70,7 @@ contract ProCounterTest is Test {
 
     function testBroadcastNumber() public {
         uint256 newNumber = 10;
-        uint256[] memory slugs = new uint256[](1);
+        uint32[] memory slugs = new uint32[](1);
         uint256[] memory fees = new uint256[](1);
 
         slugs[0] = siblingChainSlug_;
