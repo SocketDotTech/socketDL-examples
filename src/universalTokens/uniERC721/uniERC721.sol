@@ -67,7 +67,7 @@ contract uniERC721 is ERC721, Ownable {
     }
 
     function connectRemoteNFTToken(
-        uint256 siblingChainSlug_,
+        uint32 siblingChainSlug_,
         address siblingPlug_,
         address inboundSwitchboard_,
         address outboundSwitchboard_
@@ -93,7 +93,7 @@ contract uniERC721 is ERC721, Ownable {
 
     /* Transfers tokens between chains */
     function uniTransfer(
-        uint256 _destChainSlug,
+        uint32 _destChainSlug,
         address _destReceiver,
         uint256 tokenId
     ) external payable {
@@ -104,6 +104,8 @@ contract uniERC721 is ERC721, Ownable {
         ISocket(socket).outbound(
             _destChainSlug,
             destGasLimits[_destChainSlug],
+            bytes32(0),
+            bytes32(0),
             payload
         );
 

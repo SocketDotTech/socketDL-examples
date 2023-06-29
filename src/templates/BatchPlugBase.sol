@@ -6,7 +6,7 @@ import {PlugBase} from "../base/PlugBase.sol";
 abstract contract BatchPlugBase is PlugBase {
     function _batch(
         uint256[] memory gasLimit_,
-        uint256[] memory chainSlugs_,
+        uint32[] memory chainSlugs_,
         uint256[] memory fees_,
         bytes[] memory payloads_,
         function(bytes memory) internal returns (bytes memory) createPayload_

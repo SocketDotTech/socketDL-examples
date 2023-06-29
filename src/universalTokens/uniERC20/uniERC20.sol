@@ -43,7 +43,7 @@ contract uniERC20 is ERC20, Ownable {
     ************************************************************************/
 
     function connectRemoteToken(
-        uint256 siblingChainSlug_,
+        uint32 siblingChainSlug_,
         address siblingPlug_,
         address inboundSwitchboard_,
         address outboundSwitchboard_
@@ -73,7 +73,7 @@ contract uniERC20 is ERC20, Ownable {
 
     /* Burns user tokens on source chain and sends mint message on destination chain */
     function uniTransfer(
-        uint256 _destChainSlug,
+        uint32 _destChainSlug,
         address _destReceiver,
         uint256 _amount
     ) external payable {
@@ -84,6 +84,8 @@ contract uniERC20 is ERC20, Ownable {
         ISocket(socket).outbound(
             _destChainSlug,
             destGasLimits[_destChainSlug],
+            bytes32(0),
+            bytes32(0),
             payload
         );
 
