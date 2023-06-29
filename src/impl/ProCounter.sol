@@ -25,7 +25,7 @@ contract ProCounter is
 
     function setRemoteNumber(
         uint256 newNumber_,
-        uint256 toChainSlug_
+        uint32 toChainSlug_
     ) external payable {
         bytes memory payload = abi.encode(newNumber_);
 
@@ -51,7 +51,7 @@ contract ProCounter is
     function setSequentialNumbers(
         uint256 start_,
         uint256 end_,
-        uint256[] memory toChainSlugs_,
+        uint32[] memory toChainSlugs_,
         uint256[] memory fees_
     ) external payable {
         uint256 len = end_ - start_;
@@ -69,7 +69,7 @@ contract ProCounter is
 
     function broadcastNumber(
         uint256 newNumber_,
-        uint256[] calldata toChainSlugs_,
+        uint32[] calldata toChainSlugs_,
         uint256[] calldata fees_
     ) external payable {
         bytes memory payload = abi.encode(newNumber_);
@@ -86,7 +86,7 @@ contract ProCounter is
     function unicastNumber(
         uint256 start_,
         uint256 end_,
-        uint256 toChainSlug_,
+        uint32 toChainSlug_,
         uint256 fees_
     ) external payable {
         uint256 len = end_ - start_;
@@ -111,7 +111,7 @@ contract ProCounter is
     }
 
     function _receiveInbound(
-        uint256,
+        uint32,
         bytes memory payload_
     ) internal virtual override {
         (bytes memory payload, bool canExecute) = _beforeInbound(payload_);

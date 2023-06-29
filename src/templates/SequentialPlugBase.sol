@@ -19,7 +19,7 @@ abstract contract SequentialPlugBase is PlugBase {
 
     function _sequentialOutbound(
         uint256 gasLimit_,
-        uint256 chainSlug_,
+        uint32 chainSlug_,
         uint256 fees_,
         bytes memory message_
     ) internal {
