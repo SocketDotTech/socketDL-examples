@@ -2,7 +2,6 @@ pragma solidity ^0.8.0;
 
 import "openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
 import "openzeppelin-contracts/contracts/access/Ownable.sol";
-import {ISocket} from "../../interfaces/ISocket.sol";
 import {PlugBase} from "../../base/PlugBase.sol";
 
 contract uniERC721 is ERC721, PlugBase {
@@ -43,7 +42,7 @@ contract uniERC721 is ERC721, PlugBase {
     );
 
     /**
-     * @notice Initiatls uniERC721, ERC721 and PlugBase
+     * @notice Initialises uniERC721, ERC721 and PlugBase
      * @dev isMintingAllowed_ should be enabled only on a single instance/chain for this example contract
      * @param socket_ Address of Socket on respective chain
      * @param name_ Name of NFT token
@@ -115,8 +114,7 @@ contract uniERC721 is ERC721, PlugBase {
         _outbound(
             _destChainSlug,
             destGasLimits[_destChainSlug],
-            bytes32(0),
-            bytes32(0),
+            msg.value,
             payload
         );
 

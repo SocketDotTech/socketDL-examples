@@ -2,7 +2,6 @@ pragma solidity 0.8.13;
 
 import "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-contracts/contracts/access/Ownable.sol";
-import {ISocket} from "../../interfaces/ISocket.sol";
 import {PlugBase} from "../../base/PlugBase.sol";
 
 contract uniERC20 is ERC20, PlugBase {
@@ -77,8 +76,7 @@ contract uniERC20 is ERC20, PlugBase {
         _outbound(
             _destChainSlug,
             destGasLimits[_destChainSlug],
-            bytes32(0),
-            bytes32(0),
+            msg.value,
             payload
         );
 

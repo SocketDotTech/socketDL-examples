@@ -82,7 +82,7 @@ contract MockSocket is ISocket {
         ][chainSlug];
 
         if (dstPlugConfig.siblingPlug != msg.sender) revert WrongSiblingPlug();
-        IPlug(srcPlugConfig.siblingPlug).inbound{gas: msgGasLimit_}(
+        IPlug(srcPlugConfig.siblingPlug).inbound{gas: minMsgGasLimit_}(
             chainSlug,
             payload_
         );

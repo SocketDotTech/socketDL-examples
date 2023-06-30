@@ -2,7 +2,6 @@ pragma solidity 0.8.13;
 
 import "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-contracts/contracts/access/Ownable.sol";
-import {ISocket} from "../../interfaces/ISocket.sol";
 import {PlugBase} from "../../base/PlugBase.sol";
 import {Gauge} from "./extension/Gauge.sol";
 

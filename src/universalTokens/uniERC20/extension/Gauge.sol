@@ -5,8 +5,6 @@ import "openzeppelin-contracts/contracts/access/AccessControl.sol";
 contract Gauge is AccessControl {
     mapping(uint32 => Limits) public bridgeLimits;
 
-    // bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
-    // bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
     uint256 private constant _DURATION = 1 days;
 
     struct Limits {
@@ -23,8 +21,6 @@ contract Gauge is AccessControl {
 
     constructor() {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        // _grantRole(MINTER_ROLE, _minter);
-        // _grantRole(BURNER_ROLE, _burner);
     }
 
     /**
@@ -59,7 +55,7 @@ contract Gauge is AccessControl {
         uint32 _siblingChainSlug,
         uint256 _amount
     ) public view returns (bool) {
-        uint32 _limit = getMintCurrentLimit(_siblingChainSlug);
+        uint256 _limit = getMintCurrentLimit(_siblingChainSlug);
 
         if (_amount <= _limit) return true;
         return false;
