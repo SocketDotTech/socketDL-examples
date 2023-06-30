@@ -19,7 +19,7 @@ contract PingPong is PlugBase {
 
     // pings the destination chain, along with the current number of pings sent
     function ping(
-        uint256 toChainSlug_, // send a ping to this destination slug
+        uint32 toChainSlug_, // send a ping to this destination slug
         uint256 pings_ // the number of pings
     ) public payable {
         require(address(this).balance > 0, "no gas");
@@ -32,7 +32,7 @@ contract PingPong is PlugBase {
     }
 
     function _receiveInbound(
-        uint256 siblingChainSlug_,
+        uint32 siblingChainSlug_,
         bytes memory payload_
     ) internal virtual override {
         // decode the number of pings sent thus far

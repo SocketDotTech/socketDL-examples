@@ -10,10 +10,10 @@ contract GaugedUniERC20 is ERC20, PlugBase, Gauge {
     /**
      * @notice destination gasLimit of executing payload for respective chains
      */
-    mapping(uint256 => uint256) public destGasLimits;
+    mapping(uint32 => uint256) public destGasLimits;
 
     event UniTransfer(
-        uint256 destChainSlug,
+        uint32 destChainSlug,
         address destReceiver,
         uint256 amount
     );
@@ -22,7 +22,7 @@ contract GaugedUniERC20 is ERC20, PlugBase, Gauge {
         address sender,
         address destReceiver,
         uint256 amount,
-        uint256 srcChainSlug
+        uint32 srcChainSlug
     );
 
     modifier onlySocket() {
@@ -49,7 +49,7 @@ contract GaugedUniERC20 is ERC20, PlugBase, Gauge {
      * @param _gasLimit gasLimit value
      */
     function setDestChainGasLimit(
-        uint256 _chainSlug,
+        uint32 _chainSlug,
         uint256 _gasLimit
     ) external onlyOwner {
         destGasLimits[_chainSlug] = _gasLimit;
@@ -67,7 +67,7 @@ contract GaugedUniERC20 is ERC20, PlugBase, Gauge {
      * @param _amount amount/value being transferred
      */
     function uniTransfer(
-        uint256 _destChainSlug,
+        uint32 _destChainSlug,
         address _destReceiver,
         uint256 _amount
     ) external payable {
@@ -97,7 +97,7 @@ contract GaugedUniERC20 is ERC20, PlugBase, Gauge {
      * @param payload_ Payload sent in the message
      */
     function _uniReceive(
-        uint256 siblingChainSlug_,
+        uint32 siblingChainSlug_,
         bytes memory payload_
     ) internal {
         (address _sender, address _receiver, uint256 _amount) = abi.decode(
@@ -123,7 +123,7 @@ contract GaugedUniERC20 is ERC20, PlugBase, Gauge {
      * @param payload_ Payload sent in the message
      */
     function _receiveInbound(
-        uint256 siblingChainSlug_,
+        uint32 siblingChainSlug_,
         bytes memory payload_
     ) internal virtual override onlySocket {
         _uniReceive(siblingChainSlug_, payload_);

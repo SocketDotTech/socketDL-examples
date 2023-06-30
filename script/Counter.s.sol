@@ -22,7 +22,7 @@ contract CounterScript is Script {
 
         Counter counter = Counter(socket);
         counter.connect(
-            vm.envUint("SIBLING_CHAIN_SLUG"),
+            uint32(vm.envUint("SIBLING_CHAIN_SLUG")),
             vm.envAddress("SIBLING_ADDRESS"),
             vm.envAddress("INBOUND_SWITCHBOARD"),
             vm.envAddress("OUTBOUND_SWITCHBOARD")
@@ -35,7 +35,7 @@ contract CounterScript is Script {
         vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
         address socket = vm.envAddress("SOCKET");
         uint256 newNumber = vm.envUint("NEW_NUMBER");
-        uint256 toChainSlug = vm.envUint("TO_CHAIN_SLUG");
+        uint32 toChainSlug = uint32(vm.envUint("TO_CHAIN_SLUG"));
 
         Counter counter = Counter(socket);
 

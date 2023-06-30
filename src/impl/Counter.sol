@@ -13,7 +13,7 @@ contract Counter is PlugBase {
 
     function setRemoteNumber(
         uint256 newNumber_,
-        uint256 toChainSlug_
+        uint32 toChainSlug_
     ) external payable {
         _outbound(
             toChainSlug_,
@@ -32,7 +32,7 @@ contract Counter is PlugBase {
     }
 
     function _receiveInbound(
-        uint256,
+        uint32,
         bytes memory payload_
     ) internal virtual override {
         uint256 newNumber = abi.decode(payload_, (uint256));

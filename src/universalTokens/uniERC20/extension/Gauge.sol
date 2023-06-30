@@ -3,7 +3,7 @@ pragma solidity 0.8.13;
 import "openzeppelin-contracts/contracts/access/AccessControl.sol";
 
 contract Gauge is AccessControl {
-    mapping(uint256 => Limits) public bridgeLimits;
+    mapping(uint32 => Limits) public bridgeLimits;
 
     // bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     // bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
@@ -34,7 +34,7 @@ contract Gauge is AccessControl {
      * @param _limits Minting and burning limits for specified sibling chain
      */
     function setLimits(
-        uint256 _siblingSlug,
+        uint32 _siblingSlug,
         Limits memory _limits
     ) public onlyRole(DEFAULT_ADMIN_ROLE) {
         bridgeLimits[_siblingSlug] = _limits;
@@ -45,7 +45,7 @@ contract Gauge is AccessControl {
      * @param _siblingSlug chainSlug for which limits are set
      */
     function getBridgeLimits(
-        uint256 _siblingSlug
+        uint32 _siblingSlug
     ) public view returns (Limits memory) {
         return bridgeLimits[_siblingSlug];
     }
@@ -56,17 +56,17 @@ contract Gauge is AccessControl {
      * @param _amount Amount of tokens to be minted
      */
     function checkMintValidity(
-        uint256 _siblingChainSlug,
+        uint32 _siblingChainSlug,
         uint256 _amount
     ) public view returns (bool) {
-        uint256 _limit = getMintCurrentLimit(_siblingChainSlug);
+        uint32 _limit = getMintCurrentLimit(_siblingChainSlug);
 
         if (_amount <= _limit) return true;
         return false;
     }
 
     function getMintCurrentLimit(
-        uint256 _siblingChainSlug
+        uint32 _siblingChainSlug
     ) public view returns (uint256) {
         return
             _getCurrentLimit(
@@ -83,7 +83,7 @@ contract Gauge is AccessControl {
      * @param _amount Amount of tokens being burnt
      */
     function checkBurnValidity(
-        uint256 _siblingChainSlug,
+        uint32 _siblingChainSlug,
         uint256 _amount
     ) public view returns (bool) {
         uint256 _limit = getBurnCurrentLimit(_siblingChainSlug);
@@ -93,7 +93,7 @@ contract Gauge is AccessControl {
     }
 
     function getBurnCurrentLimit(
-        uint256 _siblingChainSlug
+        uint32 _siblingChainSlug
     ) public view returns (uint256) {
         return
             _getCurrentLimit(
@@ -137,7 +137,7 @@ contract Gauge is AccessControl {
     }
 
     function _useTokensMinted(
-        uint256 _siblingChainSlug,
+        uint32 _siblingChainSlug,
         uint256 _amount
     ) internal {
         _updateMintLimits(_siblingChainSlug, _amount);
@@ -149,7 +149,7 @@ contract Gauge is AccessControl {
      * @param _amount Amount of tokens minted
      */
     function _updateMintLimits(
-        uint256 _siblingChainSlug,
+        uint32 _siblingChainSlug,
         uint256 _amount
     ) internal {
         uint256 _currentLimit = getMintCurrentLimit(_siblingChainSlug);
@@ -161,7 +161,7 @@ contract Gauge is AccessControl {
     }
 
     function _useTokensBurnt(
-        uint256 _siblingChainSlug,
+        uint32 _siblingChainSlug,
         uint256 _amount
     ) internal {
         _updateBurnLimits(_siblingChainSlug, _amount);
@@ -173,7 +173,7 @@ contract Gauge is AccessControl {
      * @param _amount Amount of tokens burnt
      */
     function _updateBurnLimits(
-        uint256 _siblingChainSlug,
+        uint32 _siblingChainSlug,
         uint256 _amount
     ) internal {
         uint256 _currentLimit = getBurnCurrentLimit(_siblingChainSlug);

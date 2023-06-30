@@ -21,7 +21,7 @@ abstract contract PlugBase {
     }
 
     function connect(
-        uint256 siblingChainSlug_,
+        uint32 siblingChainSlug_,
         address siblingPlug_,
         address inboundSwitchboard_,
         address outboundSwitchboard_
@@ -35,7 +35,7 @@ abstract contract PlugBase {
     }
 
     function inbound(
-        uint256 siblingChainSlug_,
+        uint32 siblingChainSlug_,
         bytes calldata payload_
     ) external payable {
         require(msg.sender == address(socket), "no auth");
@@ -43,20 +43,26 @@ abstract contract PlugBase {
     }
 
     function _outbound(
-        uint256 chainSlug_,
+        uint32 chainSlug_,
         uint256 gasLimit_,
         uint256 fees_,
         bytes memory payload_
     ) internal {
-        socket.outbound{value: fees_}(chainSlug_, gasLimit_, payload_);
+        socket.outbound{value: fees_}(
+            chainSlug_,
+            gasLimit_,
+            bytes32(0),
+            bytes32(0),
+            payload_
+        );
     }
 
     function _receiveInbound(
-        uint256 siblingChainSlug_,
+        uint32 siblingChainSlug_,
         bytes memory payload_
     ) internal virtual;
 
-    function _getChainSlug() internal view returns (uint256) {
+    function _getChainSlug() internal view returns (uint32) {
         return socket.chainSlug();
     }
 

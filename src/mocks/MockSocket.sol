@@ -5,7 +5,7 @@ import "../interfaces/ISocket.sol";
 import "../interfaces/IPlug.sol";
 
 contract MockSocket is ISocket {
-    uint256 public immutable override chainSlug;
+    uint32 public immutable override chainSlug;
 
     address public constant fastSwitchboard = address(1);
     address public constant optimisticSwitchboard = address(2);
@@ -26,7 +26,7 @@ contract MockSocket is ISocket {
 
     error InvalidConnection();
 
-    constructor(uint256 chainSlug_, uint256 siblingChainSlug_) {
+    constructor(uint32 chainSlug_, uint256 siblingChainSlug_) {
         chainSlug = chainSlug_;
 
         configExists[fastSwitchboard][siblingChainSlug_] = true;
@@ -37,7 +37,7 @@ contract MockSocket is ISocket {
     }
 
     function connect(
-        uint256 siblingChainSlug_,
+        uint32 siblingChainSlug_,
         address siblingPlug_,
         address inboundSwitchboard_,
         address outboundSwitchboard_
@@ -67,8 +67,10 @@ contract MockSocket is ISocket {
     }
 
     function outbound(
-        uint256 siblingChainSlug_,
-        uint256 msgGasLimit_,
+        uint32 siblingChainSlug_,
+        uint256 minMsgGasLimit_,
+        bytes32,
+        bytes32,
         bytes calldata payload_
     ) external payable override returns (bytes32) {
         PlugConfig memory srcPlugConfig = plugConfigs[msg.sender][
@@ -90,7 +92,7 @@ contract MockSocket is ISocket {
 
     function getPlugConfig(
         address plugAddress_,
-        uint256 siblingChainSlug_
+        uint32 siblingChainSlug_
     )
         external
         view
@@ -113,4 +115,19 @@ contract MockSocket is ISocket {
             address(0)
         );
     }
+
+    // ignore other functions
+    function execute(
+        ISocket.ExecutionDetails calldata executionDetails_,
+        ISocket.MessageDetails calldata messageDetails_
+    ) external payable override {}
+
+    function getMinFees(
+        uint256 minMsgGasLimit_,
+        uint256 payloadSize_,
+        bytes32 executionParams_,
+        bytes32 transmissionParams_,
+        uint32 remoteChainSlug_,
+        address plug_
+    ) external view override returns (uint256 totalFees) {}
 }

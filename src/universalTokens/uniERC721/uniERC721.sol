@@ -12,7 +12,7 @@ contract uniERC721 is ERC721, PlugBase {
     /**
      * @notice destination gasLimit of executing payload for respective chains
      */
-    mapping(uint256 => uint256) public destGasLimits;
+    mapping(uint32 => uint256) public destGasLimits;
 
     modifier onlySocket() {
         require(msg.sender == address(socket), "Not Socket");
@@ -30,7 +30,7 @@ contract uniERC721 is ERC721, PlugBase {
     event TokenMinted(address minter, uint256 tokenId);
 
     event UniTransfer(
-        uint256 destChainSlug,
+        uint32 destChainSlug,
         address destReceiver,
         uint256 tokenId
     );
@@ -39,7 +39,7 @@ contract uniERC721 is ERC721, PlugBase {
         address sender,
         address destReceiver,
         uint256 tokenId,
-        uint256 srcChainSlug
+        uint32 srcChainSlug
     );
 
     /**
@@ -77,7 +77,7 @@ contract uniERC721 is ERC721, PlugBase {
      * @param _gasLimit gasLimit value
      */
     function setDestChainGasLimit(
-        uint256 _chainSlug,
+        uint32 _chainSlug,
         uint256 _gasLimit
     ) external onlyOwner {
         destGasLimits[_chainSlug] = _gasLimit;
@@ -104,7 +104,7 @@ contract uniERC721 is ERC721, PlugBase {
      * @param tokenId tokenId of NFT being transferred
      */
     function uniTransfer(
-        uint256 _destChainSlug,
+        uint32 _destChainSlug,
         address _destReceiver,
         uint256 tokenId
     ) external payable {
@@ -115,7 +115,8 @@ contract uniERC721 is ERC721, PlugBase {
         _outbound(
             _destChainSlug,
             destGasLimits[_destChainSlug],
-            msg.value,
+            bytes32(0),
+            bytes32(0),
             payload
         );
 
@@ -130,7 +131,7 @@ contract uniERC721 is ERC721, PlugBase {
      * @param _tokenId tokenID of NFT that was transferred
      */
     function _uniReceive(
-        uint256 _siblingChainSlug,
+        uint32 _siblingChainSlug,
         address _sender,
         address _receiver,
         uint256 _tokenId
@@ -147,7 +148,7 @@ contract uniERC721 is ERC721, PlugBase {
      * @param payload_ Payload sent in the message
      */
     function _receiveInbound(
-        uint256 siblingChainSlug_,
+        uint32 siblingChainSlug_,
         bytes memory payload_
     ) internal virtual override onlySocket {
         (address sender, address receiver, uint256 tokenId) = abi.decode(
