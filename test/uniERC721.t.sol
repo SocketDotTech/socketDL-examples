@@ -10,8 +10,8 @@ contract uniERC721Test is Test {
     uniERC721 public dstToken__;
     MockSocket public mockSocket__;
 
-    uint256 chainSlug_ = 1;
-    uint256 siblingChainSlug_ = 2;
+    uint32 chainSlug_ = 1;
+    uint32 siblingChainSlug_ = 2;
 
     address public constant fastSwitchboard = address(1);
     address public constant optimisticSwitchboard = address(2);
