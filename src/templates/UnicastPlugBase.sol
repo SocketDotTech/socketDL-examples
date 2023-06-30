@@ -5,7 +5,7 @@ import {PlugBase} from "../base/PlugBase.sol";
 
 abstract contract UnicastPlugBase is PlugBase {
     function _unicast(
-        uint256 chainSlug_,
+        uint32 chainSlug_,
         uint256 gasLimit_,
         uint256 fees_,
         bytes[] memory payloads_,

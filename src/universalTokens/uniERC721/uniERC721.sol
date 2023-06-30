@@ -83,6 +83,20 @@ contract uniERC721 is ERC721, PlugBase {
         destGasLimits[_chainSlug] = _gasLimit;
     }
 
+    function connectRemoteNFTToken(
+        uint32 siblingChainSlug_,
+        address siblingPlug_,
+        address inboundSwitchboard_,
+        address outboundSwitchboard_
+    ) external onlyOwner {
+        ISocket(socket).connect(
+            siblingChainSlug_,
+            siblingPlug_,
+            inboundSwitchboard_,
+            outboundSwitchboard_
+        );
+    }
+
     /************************************************************************
         Minting & Transfering NFT
     ************************************************************************/
@@ -104,7 +118,7 @@ contract uniERC721 is ERC721, PlugBase {
      * @param tokenId tokenId of NFT being transferred
      */
     function uniTransfer(
-        uint256 _destChainSlug,
+        uint32 _destChainSlug,
         address _destReceiver,
         uint256 tokenId
     ) external payable {
@@ -115,7 +129,8 @@ contract uniERC721 is ERC721, PlugBase {
         _outbound(
             _destChainSlug,
             destGasLimits[_destChainSlug],
-            msg.value,
+            bytes32(0),
+            bytes32(0),
             payload
         );
 

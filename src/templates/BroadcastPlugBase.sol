@@ -6,7 +6,7 @@ import {PlugBase} from "../base/PlugBase.sol";
 abstract contract BroadcastPlugBase is PlugBase {
     function _broadcast(
         uint256 gasLimit_,
-        uint256[] calldata chainSlugs_,
+        uint32[] calldata chainSlugs_,
         uint256[] calldata fees_,
         bytes memory message_
     ) internal {

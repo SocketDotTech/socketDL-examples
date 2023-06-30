@@ -42,11 +42,24 @@ contract uniERC20 is ERC20, PlugBase {
         Config Functions 
     ************************************************************************/
 
-    /**
-     * @notice Sets destGasLimits required to mint & transfer tokens on destination chain
-     * @param _chainSlug Chain Slug of chain for which destination gasLimit is being set
-     * @param _gasLimit gasLimit value
-     */
+    function connectRemoteToken(
+        uint32 siblingChainSlug_,
+        address siblingPlug_,
+        address inboundSwitchboard_,
+        address outboundSwitchboard_
+    ) external onlyOwner {
+        ISocket(socket).connect(
+            siblingChainSlug_,
+            siblingPlug_,
+            inboundSwitchboard_,
+            outboundSwitchboard_
+        );
+    }
+
+    function setSocketAddress(address _socket) external onlyOwner {
+        socket = _socket;
+    }
+
     function setDestChainGasLimit(
         uint256 _chainSlug,
         uint256 _gasLimit
@@ -66,7 +79,7 @@ contract uniERC20 is ERC20, PlugBase {
      * @param _amount amount/value being transferred
      */
     function uniTransfer(
-        uint256 _destChainSlug,
+        uint32 _destChainSlug,
         address _destReceiver,
         uint256 _amount
     ) external payable {
@@ -77,7 +90,8 @@ contract uniERC20 is ERC20, PlugBase {
         _outbound(
             _destChainSlug,
             destGasLimits[_destChainSlug],
-            msg.value,
+            bytes32(0),
+            bytes32(0),
             payload
         );
 
