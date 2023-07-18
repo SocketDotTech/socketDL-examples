@@ -1,65 +1,14 @@
 pragma solidity 0.8.13;
 
-import "openzeppelin-contracts/contracts/access/Ownable2Step.sol";
 import "solmate/utils/SafeTransferLib.sol";
-import "../../interfaces/ISocket.sol";
 import {IExchangeRate} from"./ExchangeRate.sol";
-import "./Gauge.sol";
+import {Gauge} from "./Gauge.sol";
+import {PlugBase} from "./PlugBase.sol";
 
 abstract contract IMintableERC20 is ERC20 {
     function mint(address receiver_, uint256 amount_) external virtual;
 
     function burn(address burner_, uint256 amount_) external virtual;
-}
-
-abstract contract PlugBase is Ownable2Step {
-    ISocket public socket__;
-
-    constructor(address socket_) {
-        socket__ = ISocket(socket_);
-    }
-
-    function connect(
-        uint32 siblingChainSlug_,
-        address siblingPlug_,
-        address inboundSwitchboard_,
-        address outboundSwitchboard_
-    ) external onlyOwner {
-        socket__.connect(
-            siblingChainSlug_,
-            siblingPlug_,
-            inboundSwitchboard_,
-            outboundSwitchboard_
-        );
-    }
-
-    function inbound(
-        uint32 siblingChainSlug_,
-        bytes calldata payload_
-    ) external payable {
-        require(msg.sender == address(socket__), "no auth");
-        _receiveInbound(siblingChainSlug_, payload_);
-    }
-
-    function _outbound(
-        uint32 chainSlug_,
-        uint256 gasLimit_,
-        uint256 fees_,
-        bytes memory payload_
-    ) internal {
-        socket__.outbound{value: fees_}(
-            chainSlug_,
-            gasLimit_,
-            bytes32(0),
-            bytes32(0),
-            payload_
-        );
-    }
-
-    function _receiveInbound(
-        uint32 siblingChainSlug_,
-        bytes memory payload_
-    ) internal virtual;
 }
 
 // @todo: separate our connecter plugs
