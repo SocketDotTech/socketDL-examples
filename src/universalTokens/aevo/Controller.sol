@@ -1,7 +1,7 @@
 pragma solidity 0.8.13;
 
 import "solmate/utils/SafeTransferLib.sol";
-import {IExchangeRate} from"./ExchangeRate.sol";
+import {IExchangeRate} from "./ExchangeRate.sol";
 import {Gauge} from "./Gauge.sol";
 import {PlugBase} from "./PlugBase.sol";
 
@@ -23,7 +23,7 @@ contract Controller is PlugBase, Gauge {
     mapping(uint32 => LimitParams) _burnLimitParams;
 
     // siblingChain => receiver => amount
-    mapping(uint32 => mapping (address => uint256)) public pendingMints;
+    mapping(uint32 => mapping(address => uint256)) public pendingMints;
 
     error LengthMismatch();
 
@@ -84,7 +84,10 @@ contract Controller is PlugBase, Gauge {
         );
     }
 
-    function mintPendingFor(address receiver_, uint32 siblingChainSlug_) external {
+    function mintPendingFor(
+        address receiver_,
+        uint32 siblingChainSlug_
+    ) external {
         uint256 pendingMint = pendingMints[siblingChainSlug_][receiver_];
         (uint256 consumedAmount, uint256 pendingAmount) = _consumePartLimit(
             pendingMint,
