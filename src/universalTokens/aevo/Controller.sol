@@ -3,6 +3,7 @@ pragma solidity 0.8.13;
 import "openzeppelin-contracts/contracts/access/Ownable2Step.sol";
 import "../../interfaces/ISocket.sol";
 import "./ExchangeRate.sol";
+import "./Gauge.sol";
 
 interface IMintableERC20 {
     function mint(address receiver_, uint256 amount_) external;
@@ -63,12 +64,16 @@ abstract contract PlugBase is Ownable2Step {
 // @todo: separate our connecter plugs
 // @todo: multitoken support
 // @todo: events, errors
-contract Controller is PlugBase {
+contract Controller is PlugBase, Gauge {
     IMintableERC20 public token__;
     ExchangeRate public exchangeRate__;
     mapping(uint32 => uint256) public totalLockedAmounts;
+    mapping(uint32 => LimitParams) _mintLimitParams;
+    mapping(uint32 => LimitParams) _burnLimitParams;
 
     mapping(address => uint256) public pendingMints;
+
+    error LengthMismatch();
 
     constructor(
         address token_,
@@ -83,13 +88,35 @@ contract Controller is PlugBase {
         exchangeRate__ = ExchangeRate(exchangeRate_);
     }
 
-    // todo: impl local throttling
+    // @todo: update only required
+    function updateMintLimitParams(
+        uint32[] chainSlugs,
+        LimitParams[] calldata limitParams_
+    ) external onlyOwner {
+        if (chainSlugs.length != limitParams_.length) revert LengthMismatch();
+        for (uint256 i; i < chainSlugs.length; i++) {
+            _mintLimitParams[chainSlugs[i]] = limitParams_[i];
+        }
+    }
+
+    // @todo: update only required
+    function updateBurnLimitParams(
+        LimitParams calldata limitParams_
+    ) external onlyOwner {
+        if (chainSlugs.length != limitParams_.length) revert LengthMismatch();
+        for (uint256 i; i < chainSlugs.length; i++) {
+            _burnLimitParams[chainSlugs[i]] = limitParams_[i];
+        }
+    }
+
+    // do we throttle burn amount or unlock amount? burn for now
     function withdrawFromAevo(
         uint32 toChainSlug_,
         address receiver_,
         uint256 burnAmount_,
         uint256 gasLimit_
     ) external payable {
+        _consumeFullLimit(burnAmount_, _burnLimitParams); // reverts on limit hit
         token__.burn(msg.sender, burnAmount_);
         uint256 unlockAmount = exchangeRate__.getUnlockAmount(
             burnAmount_,
@@ -104,14 +131,16 @@ contract Controller is PlugBase {
         );
     }
 
-    // todo: impl local throttling, caching, pending
     function mintPendingFor(address receiver_) external {
         uint256 pendingMint = pendingMints[receiver_];
-        pendingMints[receiver_] = 0;
-        token__.mint(receiver_, pendingMint);
+        (uint256 consumedAmount, uint256 pendingAmount) = _consumePartLimit(
+            pendingMint,
+            _mintLimitParams
+        );
+        pendingMints[receiver] = pendingAmount;
+        token__.safeTransfer(receiver, consumedAmount);
     }
 
-    // todo: impl local throttling, caching, pending
     function _receiveInbound(
         uint32 siblingChainSlug_,
         bytes memory payload_
@@ -125,6 +154,14 @@ contract Controller is PlugBase {
             lockAmount,
             totalLockedAmounts[siblingChainSlug_]
         );
-        token__.mint(receiver, mintAmount);
+        (uint256 consumedAmount, uint256 pendingAmount) = _consumePartLimit(
+            mintAmount,
+            _mintLimitParams
+        );
+        if (pendingAmount > 0) {
+            // add instead of overwrite to handle case where already pending amount is left
+            pendingMints[receiver] += pendingAmount;
+        }
+        token__.mint(receiver, consumedAmount);
     }
 }
