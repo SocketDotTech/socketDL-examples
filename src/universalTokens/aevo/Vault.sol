@@ -3,10 +3,10 @@ pragma solidity 0.8.13;
 import "solmate/utils/SafeTransferLib.sol";
 import "openzeppelin-contracts/contracts/access/Ownable2Step.sol";
 import {Gauge} from "./Gauge.sol";
-import {ConnectorPlug, IConnector, IApp} from "./ConnectorPlug.sol";
+import {IConnector, IApp} from "./ConnectorPlug.sol";
 
 // @todo: separate our connecter plugs
-contract Vault is Ownable2Step, Gauge, IApp {
+contract Vault is Gauge, IApp, Ownable2Step {
     using SafeTransferLib for ERC20;
     ERC20 public token__;
     uint32 immutable _aevoSlug;
@@ -21,7 +21,7 @@ contract Vault is Ownable2Step, Gauge, IApp {
     mapping(address => LimitParams) _unlockLimitParams;
 
     error ConnectorUnavailable();
-    error InvalidConnector();
+    error LengthMismatch();
 
     constructor(address token_, uint32 aevoSlug_) {
         token__ = ERC20(token_);
@@ -30,22 +30,24 @@ contract Vault is Ownable2Step, Gauge, IApp {
 
     // @todo: update only required
     function updateLockLimitParams(
-        address connector_,
-        LimitParams calldata limitParams_
+        address[] calldata connectors_,
+        LimitParams[] calldata limitParams_
     ) external onlyOwner {
-        if (IConnector(connector_).siblingChainSlug() != _aevoSlug)
-            revert InvalidConnector();
-        _lockLimitParams[connector_] = limitParams_;
+        if (connectors_.length != limitParams_.length) revert LengthMismatch();
+        for (uint256 i; i < connectors_.length; i++) {
+            _lockLimitParams[connectors_[i]] = limitParams_[i];
+        }
     }
 
     // @todo: update only required
     function updateUnlockLimitParams(
-        address connector_,
-        LimitParams calldata limitParams_
+        address[] calldata connectors_,
+        LimitParams[] calldata limitParams_
     ) external onlyOwner {
-        if (IConnector(connector_).siblingChainSlug() != _aevoSlug)
-            revert InvalidConnector();
-        _unlockLimitParams[connector_] = limitParams_;
+        if (connectors_.length != limitParams_.length) revert LengthMismatch();
+        for (uint256 i; i < connectors_.length; i++) {
+            _unlockLimitParams[connectors_[i]] = limitParams_[i];
+        }
     }
 
     function depositToAevo(
@@ -76,22 +78,24 @@ contract Vault is Ownable2Step, Gauge, IApp {
             pendingUnlock,
             _unlockLimitParams[connector_]
         );
+
         pendingUnlocks[connector_][receiver_] = pendingAmount;
         token__.safeTransfer(receiver_, consumedAmount);
     }
 
+    // receive inbound assuming connector called
+    // if connector is not configured (malicious), its unlock amount will forever stay in pending
     function receiveInbound(bytes memory payload_) external override {
-        if (_unlockLimitParams[msg.sender].maxLimit == 0)
-            revert ConnectorUnavailable();
-
         (address receiver, uint256 unlockAmount) = abi.decode(
             payload_,
             (address, uint256)
         );
+
         (uint256 consumedAmount, uint256 pendingAmount) = _consumePartLimit(
             unlockAmount,
             _unlockLimitParams[msg.sender]
         );
+
         if (pendingAmount > 0) {
             // add instead of overwrite to handle case where already pending amount is left
             pendingUnlocks[msg.sender][receiver] += pendingAmount;
