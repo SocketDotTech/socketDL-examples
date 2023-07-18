@@ -23,3 +23,12 @@
 
 - Contract for lock >> mint and burn >> unlock conversion.
 - Enables path to AMM based bridging.
+
+### Todo
+
+- [ ] Connector Plugs
+- [ ] Multi token support
+- [ ] Update only rate and max limits of LimitParams
+- [ ] Errors and events
+- [ ] Rescue, pause functions
+- [ ]

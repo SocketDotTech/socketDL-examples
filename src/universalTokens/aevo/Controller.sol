@@ -11,9 +11,6 @@ abstract contract IMintableERC20 is ERC20 {
     function burn(address burner_, uint256 amount_) external virtual;
 }
 
-// @todo: separate our connecter plugs
-// @todo: multitoken support
-// @todo: events, errors
 contract Controller is PlugBase, Gauge {
     using SafeTransferLib for IMintableERC20;
     IMintableERC20 public token__;
