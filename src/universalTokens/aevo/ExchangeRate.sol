@@ -17,7 +17,7 @@ interface IExchangeRate {
 }
 
 contract ExchangeRate is IExchangeRate, Ownable2Step {
-    // chainId input needed? what else?
+    // chainId input needed? what else? slippage?
     function getMintAmount(
         uint256 lockAmount,
         uint256 /* totalLockedAmount */
