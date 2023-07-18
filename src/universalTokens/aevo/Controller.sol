@@ -1,14 +1,15 @@
 pragma solidity 0.8.13;
 
 import "openzeppelin-contracts/contracts/access/Ownable2Step.sol";
+import "solmate/utils/SafeTransferLib.sol";
 import "../../interfaces/ISocket.sol";
-import "./ExchangeRate.sol";
+import {IExchangeRate} from"./ExchangeRate.sol";
 import "./Gauge.sol";
 
-interface IMintableERC20 {
-    function mint(address receiver_, uint256 amount_) external;
+abstract contract IMintableERC20 is ERC20 {
+    function mint(address receiver_, uint256 amount_) external virtual;
 
-    function burn(address burner_, uint256 amount_) external;
+    function burn(address burner_, uint256 amount_) external virtual;
 }
 
 abstract contract PlugBase is Ownable2Step {
@@ -65,13 +66,15 @@ abstract contract PlugBase is Ownable2Step {
 // @todo: multitoken support
 // @todo: events, errors
 contract Controller is PlugBase, Gauge {
+    using SafeTransferLib for IMintableERC20;
     IMintableERC20 public token__;
-    ExchangeRate public exchangeRate__;
+    IExchangeRate public exchangeRate__;
     mapping(uint32 => uint256) public totalLockedAmounts;
     mapping(uint32 => LimitParams) _mintLimitParams;
     mapping(uint32 => LimitParams) _burnLimitParams;
 
-    mapping(address => uint256) public pendingMints;
+    // siblingChain => receiver => amount
+    mapping(uint32 => mapping (address => uint256)) public pendingMints;
 
     error LengthMismatch();
 
@@ -81,31 +84,32 @@ contract Controller is PlugBase, Gauge {
         address socket_
     ) PlugBase(socket_) {
         token__ = IMintableERC20(token_);
-        exchangeRate__ = ExchangeRate(exchangeRate_);
+        exchangeRate__ = IExchangeRate(exchangeRate_);
     }
 
     function updateExchangeRate(address exchangeRate_) external onlyOwner {
-        exchangeRate__ = ExchangeRate(exchangeRate_);
+        exchangeRate__ = IExchangeRate(exchangeRate_);
     }
 
     // @todo: update only required
     function updateMintLimitParams(
-        uint32[] chainSlugs,
+        uint32[] calldata chainSlugs_,
         LimitParams[] calldata limitParams_
     ) external onlyOwner {
-        if (chainSlugs.length != limitParams_.length) revert LengthMismatch();
-        for (uint256 i; i < chainSlugs.length; i++) {
-            _mintLimitParams[chainSlugs[i]] = limitParams_[i];
+        if (chainSlugs_.length != limitParams_.length) revert LengthMismatch();
+        for (uint256 i; i < chainSlugs_.length; i++) {
+            _mintLimitParams[chainSlugs_[i]] = limitParams_[i];
         }
     }
 
     // @todo: update only required
     function updateBurnLimitParams(
-        LimitParams calldata limitParams_
+        uint32[] calldata chainSlugs_,
+        LimitParams[] calldata limitParams_
     ) external onlyOwner {
-        if (chainSlugs.length != limitParams_.length) revert LengthMismatch();
-        for (uint256 i; i < chainSlugs.length; i++) {
-            _burnLimitParams[chainSlugs[i]] = limitParams_[i];
+        if (chainSlugs_.length != limitParams_.length) revert LengthMismatch();
+        for (uint256 i; i < chainSlugs_.length; i++) {
+            _burnLimitParams[chainSlugs_[i]] = limitParams_[i];
         }
     }
 
@@ -116,7 +120,7 @@ contract Controller is PlugBase, Gauge {
         uint256 burnAmount_,
         uint256 gasLimit_
     ) external payable {
-        _consumeFullLimit(burnAmount_, _burnLimitParams); // reverts on limit hit
+        _consumeFullLimit(burnAmount_, _burnLimitParams[toChainSlug_]); // reverts on limit hit
         token__.burn(msg.sender, burnAmount_);
         uint256 unlockAmount = exchangeRate__.getUnlockAmount(
             burnAmount_,
@@ -131,14 +135,14 @@ contract Controller is PlugBase, Gauge {
         );
     }
 
-    function mintPendingFor(address receiver_) external {
-        uint256 pendingMint = pendingMints[receiver_];
+    function mintPendingFor(address receiver_, uint32 siblingChainSlug_) external {
+        uint256 pendingMint = pendingMints[siblingChainSlug_][receiver_];
         (uint256 consumedAmount, uint256 pendingAmount) = _consumePartLimit(
             pendingMint,
-            _mintLimitParams
+            _mintLimitParams[siblingChainSlug_]
         );
-        pendingMints[receiver] = pendingAmount;
-        token__.safeTransfer(receiver, consumedAmount);
+        pendingMints[siblingChainSlug_][receiver_] = pendingAmount;
+        token__.safeTransfer(receiver_, consumedAmount);
     }
 
     function _receiveInbound(
@@ -147,7 +151,7 @@ contract Controller is PlugBase, Gauge {
     ) internal override {
         (address receiver, uint256 lockAmount) = abi.decode(
             payload_,
-            (uint256, address)
+            (address, uint256)
         );
         totalLockedAmounts[siblingChainSlug_] += lockAmount;
         uint256 mintAmount = exchangeRate__.getMintAmount(
@@ -156,11 +160,11 @@ contract Controller is PlugBase, Gauge {
         );
         (uint256 consumedAmount, uint256 pendingAmount) = _consumePartLimit(
             mintAmount,
-            _mintLimitParams
+            _mintLimitParams[siblingChainSlug_]
         );
         if (pendingAmount > 0) {
             // add instead of overwrite to handle case where already pending amount is left
-            pendingMints[receiver] += pendingAmount;
+            pendingMints[siblingChainSlug_][receiver] += pendingAmount;
         }
         token__.mint(receiver, consumedAmount);
     }

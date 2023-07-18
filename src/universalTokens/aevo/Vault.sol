@@ -68,8 +68,8 @@ contract Vault is PlugBase, Gauge {
         address token_,
         address socket_,
         uint32 aevoSlug_,
-        LimitParams calldata lockLimitParams_,
-        LimitParams calldata unlockLimitParams_
+        LimitParams memory lockLimitParams_,
+        LimitParams memory unlockLimitParams_
     ) PlugBase(socket_) {
         token__ = ERC20(token_);
         _aevoSlug = aevoSlug_;
@@ -112,8 +112,8 @@ contract Vault is PlugBase, Gauge {
             pendingUnlock,
             _unlockLimitParams
         );
-        pendingUnlocks[receiver] = pendingAmount;
-        token__.safeTransfer(receiver, consumedAmount);
+        pendingUnlocks[receiver_] = pendingAmount;
+        token__.safeTransfer(receiver_, consumedAmount);
     }
 
     function _receiveInbound(
@@ -122,7 +122,7 @@ contract Vault is PlugBase, Gauge {
     ) internal override {
         (address receiver, uint256 unlockAmount) = abi.decode(
             payload_,
-            (uint256, address)
+            (address, uint256)
         );
         (uint256 consumedAmount, uint256 pendingAmount) = _consumePartLimit(
             unlockAmount,
