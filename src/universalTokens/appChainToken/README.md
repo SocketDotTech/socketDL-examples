@@ -4,7 +4,7 @@
 
 ### Vault
 
-- Contract on non Aevo chains.
+- Contract on non App chains.
 - Lock and unlock amounts.
 - Implements Gauge.
   - Revert on lock trottle.
@@ -12,7 +12,7 @@
 
 ### Controller
 
-- Contract on Aevo chain.
+- Contract on App chain.
 - Has mint and burn rights on token.
 - Calls ExchangeRate contract for lock >> mint and burn >> unlock conversion.
 - Implements sibling chain specific Gauge.
@@ -26,9 +26,9 @@
 
 ### Todo
 
-- [ ] Connector Plugs
 - [ ] Multi token support
 - [ ] Update only rate and max limits of LimitParams
 - [ ] Errors and events
 - [ ] Rescue, pause functions
+- [ ] limits scripts
 - [ ]

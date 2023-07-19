@@ -3,13 +3,13 @@ pragma solidity 0.8.13;
 import "solmate/utils/SafeTransferLib.sol";
 import "openzeppelin-contracts/contracts/access/Ownable2Step.sol";
 import {Gauge} from "./Gauge.sol";
-import {IConnector, IApp} from "./ConnectorPlug.sol";
+import {IConnector, IHub} from "./ConnectorPlug.sol";
 
 // @todo: separate our connecter plugs
-contract Vault is Gauge, IApp, Ownable2Step {
+contract Vault is Gauge, IHub, Ownable2Step {
     using SafeTransferLib for ERC20;
     ERC20 public token__;
-    uint32 immutable _aevoSlug;
+    uint32 immutable _appChainSlug;
 
     // connector => receiver => pendingUnlock
     mapping(address => mapping(address => uint256)) public pendingUnlocks;
@@ -23,9 +23,9 @@ contract Vault is Gauge, IApp, Ownable2Step {
     error ConnectorUnavailable();
     error LengthMismatch();
 
-    constructor(address token_, uint32 aevoSlug_) {
+    constructor(address token_, uint32 appChainSlug_) {
         token__ = ERC20(token_);
-        _aevoSlug = aevoSlug_;
+        _appChainSlug = appChainSlug_;
     }
 
     // @todo: update only required
@@ -50,7 +50,7 @@ contract Vault is Gauge, IApp, Ownable2Step {
         }
     }
 
-    function depositToAevo(
+    function depositToAppChain(
         address receiver_,
         uint256 amount_,
         uint256 gasLimit_,

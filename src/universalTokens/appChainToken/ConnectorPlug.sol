@@ -3,7 +3,7 @@ pragma solidity 0.8.13;
 import "openzeppelin-contracts/contracts/access/Ownable2Step.sol";
 import {ISocket} from "../../interfaces/ISocket.sol";
 
-interface IApp {
+interface IHub {
     function receiveInbound(bytes memory payload_) external;
 }
 
@@ -17,15 +17,15 @@ interface IConnector {
 }
 
 contract ConnectorPlug is IConnector, Ownable2Step {
-    IApp public app__;
+    IHub public hub__;
     ISocket public socket__;
     uint32 public immutable siblingChainSlug;
 
-    error NotApp();
+    error NotHub();
     error NotSocket();
 
-    constructor(address app_, address socket_, uint32 siblingChainSlug_) {
-        app__ = IApp(app_);
+    constructor(address hub_, address socket_, uint32 siblingChainSlug_) {
+        hub__ = IHub(hub_);
         socket__ = ISocket(socket_);
         siblingChainSlug = siblingChainSlug_;
     }
@@ -34,7 +34,7 @@ contract ConnectorPlug is IConnector, Ownable2Step {
         uint256 gasLimit_,
         bytes memory payload_
     ) external payable override {
-        if (msg.sender != address(app__)) revert NotApp();
+        if (msg.sender != address(hub__)) revert NotHub();
 
         socket__.outbound{value: msg.value}(
             siblingChainSlug,
@@ -50,7 +50,7 @@ contract ConnectorPlug is IConnector, Ownable2Step {
         bytes calldata payload_
     ) external payable {
         if (msg.sender != address(socket__)) revert NotSocket();
-        app__.receiveInbound(payload_);
+        hub__.receiveInbound(payload_);
     }
 
     function connect(
@@ -64,4 +64,6 @@ contract ConnectorPlug is IConnector, Ownable2Step {
             switchboard_
         );
     }
+
+    // @todo: disconnect
 }

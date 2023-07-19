@@ -4,7 +4,7 @@ import "solmate/utils/SafeTransferLib.sol";
 import "openzeppelin-contracts/contracts/access/Ownable2Step.sol";
 import {IExchangeRate} from "./ExchangeRate.sol";
 import {Gauge} from "./Gauge.sol";
-import {IConnector, IApp} from "./ConnectorPlug.sol";
+import {IConnector, IHub} from "./ConnectorPlug.sol";
 
 abstract contract IMintableERC20 is ERC20 {
     function mint(address receiver_, uint256 amount_) external virtual;
@@ -12,7 +12,7 @@ abstract contract IMintableERC20 is ERC20 {
     function burn(address burner_, uint256 amount_) external virtual;
 }
 
-contract Controller is IApp, Gauge, Ownable2Step {
+contract Controller is IHub, Gauge, Ownable2Step {
     using SafeTransferLib for IMintableERC20;
     IMintableERC20 public token__;
     IExchangeRate public exchangeRate__;
@@ -64,7 +64,7 @@ contract Controller is IApp, Gauge, Ownable2Step {
     }
 
     // do we throttle burn amount or unlock amount? burn for now
-    function withdrawFromAevo(
+    function withdrawFromAppChain(
         address receiver_,
         uint256 burnAmount_,
         uint256 gasLimit_,
