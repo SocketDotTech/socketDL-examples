@@ -11,6 +11,13 @@ contract Vault is Gauge, IHub, Ownable2Step {
     ERC20 public token__;
     uint32 immutable _appChainSlug;
 
+    struct UpdateLimitParams {
+        bool isLock;
+        address connector;
+        uint256 maxLimit;
+        uint256 ratePerSecond;
+    }
+
     // connector => receiver => pendingUnlock
     mapping(address => mapping(address => uint256)) public pendingUnlocks;
 
@@ -28,25 +35,17 @@ contract Vault is Gauge, IHub, Ownable2Step {
         _appChainSlug = appChainSlug_;
     }
 
-    // @todo: update only required
-    function updateLockLimitParams(
-        address[] calldata connectors_,
-        LimitParams[] calldata limitParams_
+    function updateLimitParams(
+        UpdateLimitParams[] calldata updates_
     ) external onlyOwner {
-        if (connectors_.length != limitParams_.length) revert LengthMismatch();
-        for (uint256 i; i < connectors_.length; i++) {
-            _lockLimitParams[connectors_[i]] = limitParams_[i];
-        }
-    }
-
-    // @todo: update only required
-    function updateUnlockLimitParams(
-        address[] calldata connectors_,
-        LimitParams[] calldata limitParams_
-    ) external onlyOwner {
-        if (connectors_.length != limitParams_.length) revert LengthMismatch();
-        for (uint256 i; i < connectors_.length; i++) {
-            _unlockLimitParams[connectors_[i]] = limitParams_[i];
+        for (uint256 i; i < updates_.length; i++) {
+            if (updates_[i].isLock) {
+                _lockLimitParams[updates_[i].connector].maxLimit = updates_[i].maxLimit;
+                _lockLimitParams[updates_[i].connector].ratePerSecond = updates_[i].ratePerSecond;
+            } else {
+                _unlockLimitParams[updates_[i].connector].maxLimit = updates_[i].maxLimit;
+                _unlockLimitParams[updates_[i].connector].ratePerSecond = updates_[i].ratePerSecond;
+            }
         }
     }
 

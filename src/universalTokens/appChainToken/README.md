@@ -2,6 +2,11 @@
 
 - Abstract contract used to implement rate limits.
 
+### ConnectorPlugs
+
+- Vault and Controller connect to socket via ConnectorPlugs
+- This is to enable support of multiple switchboards on same path.
+
 ### Vault
 
 - Contract on non App chains.

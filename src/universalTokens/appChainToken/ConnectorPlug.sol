@@ -2,6 +2,7 @@ pragma solidity 0.8.13;
 
 import "openzeppelin-contracts/contracts/access/Ownable2Step.sol";
 import {ISocket} from "../../interfaces/ISocket.sol";
+import {IPlug} from "../../interfaces/IPlug.sol";
 
 interface IHub {
     function receiveInbound(bytes memory payload_) external;
@@ -16,7 +17,7 @@ interface IConnector {
     function siblingChainSlug() external returns (uint32);
 }
 
-contract ConnectorPlug is IConnector, Ownable2Step {
+contract ConnectorPlug is IConnector, IPlug, Ownable2Step {
     IHub public hub__;
     ISocket public socket__;
     uint32 public immutable siblingChainSlug;
@@ -48,7 +49,7 @@ contract ConnectorPlug is IConnector, Ownable2Step {
     function inbound(
         uint32 /* siblingChainSlug_ */, // cannot be connected for any other slug, immutable variable
         bytes calldata payload_
-    ) external payable {
+    ) external payable override {
         if (msg.sender != address(socket__)) revert NotSocket();
         hub__.receiveInbound(payload_);
     }

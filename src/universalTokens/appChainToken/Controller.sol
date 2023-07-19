@@ -5,17 +5,19 @@ import "openzeppelin-contracts/contracts/access/Ownable2Step.sol";
 import {IExchangeRate} from "./ExchangeRate.sol";
 import {Gauge} from "./Gauge.sol";
 import {IConnector, IHub} from "./ConnectorPlug.sol";
-
-abstract contract IMintableERC20 is ERC20 {
-    function mint(address receiver_, uint256 amount_) external virtual;
-
-    function burn(address burner_, uint256 amount_) external virtual;
-}
+import {IMintableERC20} from "./MintableToken.sol";
 
 contract Controller is IHub, Gauge, Ownable2Step {
     using SafeTransferLib for IMintableERC20;
     IMintableERC20 public token__;
     IExchangeRate public exchangeRate__;
+
+    struct UpdateLimitParams {
+        bool isMint;
+        address connector;
+        uint256 maxLimit;
+        uint256 ratePerSecond;
+    }
 
     // connector => totalLockedAmount
     mapping(address => uint256) public totalLockedAmounts;
@@ -41,25 +43,17 @@ contract Controller is IHub, Gauge, Ownable2Step {
         exchangeRate__ = IExchangeRate(exchangeRate_);
     }
 
-    // @todo: update only required
-    function updateMintLimitParams(
-        address[] calldata connectors_,
-        LimitParams[] calldata limitParams_
+    function updateLimitParams(
+        UpdateLimitParams[] calldata updates_
     ) external onlyOwner {
-        if (connectors_.length != limitParams_.length) revert LengthMismatch();
-        for (uint256 i; i < connectors_.length; i++) {
-            _mintLimitParams[connectors_[i]] = limitParams_[i];
-        }
-    }
-
-    // @todo: update only required
-    function updateBurnLimitParams(
-        address[] calldata connectors_,
-        LimitParams[] calldata limitParams_
-    ) external onlyOwner {
-        if (connectors_.length != limitParams_.length) revert LengthMismatch();
-        for (uint256 i; i < connectors_.length; i++) {
-            _burnLimitParams[connectors_[i]] = limitParams_[i];
+        for (uint256 i; i < updates_.length; i++) {
+            if (updates_[i].isMint) {
+                _mintLimitParams[updates_[i].connector].maxLimit = updates_[i].maxLimit;
+                _mintLimitParams[updates_[i].connector].ratePerSecond = updates_[i].ratePerSecond;
+            } else {
+                _burnLimitParams[updates_[i].connector].maxLimit = updates_[i].maxLimit;
+                _burnLimitParams[updates_[i].connector].ratePerSecond = updates_[i].ratePerSecond;
+            }
         }
     }
 
