@@ -2,21 +2,25 @@ pragma solidity ^0.8.0;
 
 import "openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
 import "openzeppelin-contracts/contracts/access/Ownable.sol";
-import {ISocket} from "../../interfaces/ISocket.sol";
+import {PlugBase} from "../../base/PlugBase.sol";
 
-contract uniERC721 is ERC721, Ownable {
-    address public socket;
+contract uniERC721 is ERC721, PlugBase {
     uint256 mintedTokenId;
-
     bool isMintingAllowed;
 
-    mapping(uint256 => uint256) public destGasLimits;
+    /**
+     * @notice destination gasLimit of executing payload for respective chains
+     */
+    mapping(uint32 => uint256) public destGasLimits;
 
     modifier onlySocket() {
-        require(msg.sender == socket, "Msg Sender not Socket");
+        require(msg.sender == address(socket), "Not Socket");
         _;
     }
 
+    /**
+     * @notice set to define if NFT can be minted on a given chain
+     */
     modifier mintingAllowed() {
         require(isMintingAllowed, "Minting not allowed");
         _;
@@ -25,7 +29,7 @@ contract uniERC721 is ERC721, Ownable {
     event TokenMinted(address minter, uint256 tokenId);
 
     event UniTransfer(
-        uint256 destChainSlug,
+        uint32 destChainSlug,
         address destReceiver,
         uint256 tokenId
     );
@@ -34,64 +38,70 @@ contract uniERC721 is ERC721, Ownable {
         address sender,
         address destReceiver,
         uint256 tokenId,
-        uint256 srcChainSlug
+        uint32 srcChainSlug
     );
 
+    /**
+     * @notice Initialises uniERC721, ERC721 and PlugBase
+     * @dev isMintingAllowed_ should be enabled only on a single instance/chain for this example contract
+     * @param socket_ Address of Socket on respective chain
+     * @param name_ Name of NFT token
+     * @param symbol_ Symbol of token
+     * @param isMintingAllowed_ Boolean set to enable minting on a given chain
+     */
     constructor(
         address socket_,
         string memory name_,
         string memory symbol_,
         bool isMintingAllowed_
-    ) ERC721(name_, symbol_) {
+    ) ERC721(name_, symbol_) PlugBase(socket_) {
         isMintingAllowed = isMintingAllowed_;
-        socket = socket_;
     }
 
     /************************************************************************
         Config Functions 
     ************************************************************************/
 
+    /**
+     * @notice Sets isMintingAllowed_ allowed value
+     * @param _val boolean value to be set
+     */
     function setIsMintingAllowed(bool _val) external onlyOwner {
         isMintingAllowed = _val;
     }
 
-    function setSocketAddress(address _socket) external onlyOwner {
-        socket = _socket;
-    }
-
+    /**
+     * @notice Sets destGasLimits required to mint & transfer token on destination chain
+     * @param _chainSlug Chain Slug of chain for which destination gasLimit is being set
+     * @param _gasLimit gasLimit value
+     */
     function setDestChainGasLimit(
-        uint256 _chainSlug,
+        uint32 _chainSlug,
         uint256 _gasLimit
     ) external onlyOwner {
         destGasLimits[_chainSlug] = _gasLimit;
-    }
-
-    function connectRemoteNFTToken(
-        uint32 siblingChainSlug_,
-        address siblingPlug_,
-        address inboundSwitchboard_,
-        address outboundSwitchboard_
-    ) external onlyOwner {
-        ISocket(socket).connect(
-            siblingChainSlug_,
-            siblingPlug_,
-            inboundSwitchboard_,
-            outboundSwitchboard_
-        );
     }
 
     /************************************************************************
         Minting & Transfering NFT
     ************************************************************************/
 
-    /* Mints token on curernt chain if allowed */
+    /**
+     * @notice mints a token to msg.sender if minting is allowed
+     */
     function mintToken() public mintingAllowed {
         _safeMint(msg.sender, mintedTokenId);
         mintedTokenId++;
         emit TokenMinted(msg.sender, mintedTokenId);
     }
 
-    /* Transfers tokens between chains */
+    /**
+     * @notice uniTransfer transfers NFT from the source chain to the destination chain
+     * @dev This function burns the NFT token by tokenId on the source chain, encodes details of the burn into a payload and passes the message to the destination chain by calling `outbound` on Socket.
+     * @param _destChainSlug chainSlug of the chain the NFT are being sent to
+     * @param _destReceiver address of receiver on the destination chain
+     * @param tokenId tokenId of NFT being transferred
+     */
     function uniTransfer(
         uint32 _destChainSlug,
         address _destReceiver,
@@ -101,19 +111,25 @@ contract uniERC721 is ERC721, Ownable {
 
         bytes memory payload = abi.encode(msg.sender, _destReceiver, tokenId);
 
-        ISocket(socket).outbound{value: msg.value}(
+        _outbound(
             _destChainSlug,
             destGasLimits[_destChainSlug],
-            bytes32(0),
-            bytes32(0),
+            msg.value,
             payload
         );
 
         emit UniTransfer(_destChainSlug, _destReceiver, tokenId);
     }
 
+    /**
+     * @notice Decodes payload sent from `uniTransfer`, mints tokenId that was burn on source chain and transfer to receiver
+     * @param _siblingChainSlug chainSlug of chain the NFT was sent from
+     * @param _sender Address of address that sent the NFT from source chain
+     * @param _receiver Address of receiver on the destination chain
+     * @param _tokenId tokenID of NFT that was transferred
+     */
     function _uniReceive(
-        uint256 _siblingChainSlug,
+        uint32 _siblingChainSlug,
         address _sender,
         address _receiver,
         uint256 _tokenId
@@ -123,11 +139,16 @@ contract uniERC721 is ERC721, Ownable {
         emit UniReceive(_sender, _receiver, _tokenId, _siblingChainSlug);
     }
 
-    /* Called by Socket on destination chain when sending message */
-    function inbound(
-        uint256 siblingChainSlug_,
-        bytes calldata payload_
-    ) external onlySocket {
+    /**
+     * @notice Calls _uniReceive function to relay message & transfer NFT on the destination chain
+     * @dev
+     * @param siblingChainSlug_ chainSlug of the sibling chain the message was sent from
+     * @param payload_ Payload sent in the message
+     */
+    function _receiveInbound(
+        uint32 siblingChainSlug_,
+        bytes memory payload_
+    ) internal virtual override onlySocket {
         (address sender, address receiver, uint256 tokenId) = abi.decode(
             payload_,
             (address, address, uint256)
