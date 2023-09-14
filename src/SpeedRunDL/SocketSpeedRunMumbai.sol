@@ -7,20 +7,25 @@ pragma solidity ^0.8.0;
  */
 interface ISocket {
     function outbound(
-        uint256 remoteChainSlug_,
-        uint256 msgGasLimit_,
+        uint32 remoteChainSlug_,
+        uint256 minMsgGasLimit_,
+        bytes32 executionParams_,
+        bytes32 transmissionParams_,
         bytes calldata payload_
     ) external payable returns (bytes32 msgId);
 
     function connect(
-        uint256 siblingChainSlug_,
+        uint32 siblingChainSlug_,
         address siblingPlug_,
         address inboundSwitchboard_,
         address outboundSwitchboard_
     ) external;
 
     function getMinFees(
-        uint256 msgGasLimit_,
+        uint256 minMsgGasLimit_,
+        uint256 payloadSize_,
+        bytes32 executionParams_,
+        bytes32 transmissionParams_,
         uint32 remoteChainSlug_,
         address plug_
     ) external view returns (uint256 totalFees);
@@ -31,7 +36,7 @@ interface ISocket {
  * @dev Sends "Hello World" message from one chain to another
  */
 contract HelloWorld {
-    string public message;
+    string public message = "";
     address owner;
 
     /**
@@ -39,15 +44,15 @@ contract HelloWorld {
      */
     uint256 destGasLimit = 100000; // Gas cost of sending "Hello World" on Goerli
     uint32 public remoteChainSlug = 5; // Mumbai testnet chain ID
-    address public socket = 0xDbd87a7546b3528741E4d548F2e62dF2962a7c5F; // Socket Address on Mumbai
+    address public socket = 0x718826B533DF29C30f2d3f30E585e405eeF22784; // Socket Address on Mumbai
     address public inboundSwitchboard =
-        0x2dc464B4f5Fd55ea19f0bdF71A8dc3584eeb64d7; // FAST Switchboard on Mumbai
+        0x27513Ed43490B6e0801e724ff1b1637be657447E; // FAST Switchboard on Mumbai
     address public outboundSwitchboard =
-        0x2dc464B4f5Fd55ea19f0bdF71A8dc3584eeb64d7; // FAST Switchboard on Mumbai
+        0x27513Ed43490B6e0801e724ff1b1637be657447E; // FAST Switchboard on Mumbai
 
-    event MessageSent(uint256 destChainSlug, string message);
+    event MessageSent(uint32 destChainSlug, string message);
 
-    event MessageReceived(uint256 srcChainSlug, string message);
+    event MessageReceived(uint32 srcChainSlug, string message);
 
     modifier isOwner() {
         require(msg.sender == owner, "Not owner");
@@ -112,25 +117,34 @@ contract HelloWorld {
      * @dev Sends message to remote chain HelloWorld plug
      */
     function sendMessage() external payable {
-        uint256 totalFees = _getMinimumFees(destGasLimit, remoteChainSlug);
+        bytes memory payload = abi.encode(message);
+
+        uint256 totalFees = _getMinimumFees(destGasLimit, payload.length);
 
         if (msg.value < totalFees) revert InsufficientFees();
 
-        bytes memory payload = abi.encode("Hello World");
-
-        ISocket(socket).outbound{value: msg.value}(remoteChainSlug, destGasLimit, payload);
+        ISocket(socket).outbound{value: msg.value}(
+            remoteChainSlug,
+            destGasLimit,
+            bytes32(0),
+            bytes32(0),
+            payload
+        );
 
         emit MessageSent(remoteChainSlug, message);
     }
 
     function _getMinimumFees(
-        uint256 msgGasLimit_,
-        uint32 _remoteChainSlug
+        uint256 minMsgGasLimit_,
+        uint256 payloadSize_
     ) internal view returns (uint256) {
         return
             ISocket(socket).getMinFees(
-                msgGasLimit_,
-                _remoteChainSlug,
+                minMsgGasLimit_,
+                payloadSize_,
+                bytes32(0),
+                bytes32(0),
+                remoteChainSlug,
                 address(this)
             );
     }
@@ -143,7 +157,7 @@ contract HelloWorld {
      * @dev Sets new message on destination chain and emits event
      */
     function _receiveMessage(
-        uint256 _srcChainSlug,
+        uint32 _srcChainSlug,
         string memory _message
     ) internal {
         message = _message;
@@ -154,7 +168,7 @@ contract HelloWorld {
      * @dev Called by Socket when sending destination payload
      */
     function inbound(
-        uint256 srcChainSlug_,
+        uint32 srcChainSlug_,
         bytes calldata payload_
     ) external isSocket {
         string memory _message = abi.decode(payload_, (string));
